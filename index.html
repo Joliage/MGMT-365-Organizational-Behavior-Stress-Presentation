@@ -1,0 +1,2052 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>IS 340 · Chapter 5 — Stress · Interactive Live Demo</title>
+<style>
+:root{
+  --tb:#4F97A3;        /* Turkish blue (primary) */
+  --tb-dk:#357079;     /* darker */
+  --tb-dkr:#22505A;    /* deepest */
+  --tb-dpst:#15353D;   /* ink-teal */
+  --tb-lt:#7FB8C2;     /* light */
+  --tb-ltr:#A9D1D8;    /* lighter */
+  --tb-pale:#DCEDEF;   /* pale */
+  --tb-mist:#EFF6F7;   /* mist bg */
+  --paper:#FBFDFD;
+  --ink:#16323A;
+  --ink-soft:#4A6771;
+  --gold:#E0A43B;      /* challenge / positive accent */
+  --gold-dk:#B87E1E;
+  --coral:#CE6A5A;     /* hindrance / negative accent */
+  --coral-dk:#A44A3B;
+  --line:#CFE0E3;
+  --shadow:0 18px 50px rgba(21,53,61,.18);
+  --shadow-sm:0 6px 18px rgba(21,53,61,.12);
+  --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+  --serif:Georgia,"Times New Roman",serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;width:100%;overflow:hidden;background:#0d2126;font-family:var(--sans)}
+#viewport{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;
+  background:radial-gradient(1200px 700px at 30% 20%,#123037 0%,#0d2126 60%,#081a1f 100%);}
+#stage{position:absolute;left:50%;top:50%;width:1280px;height:720px;transform:translate(-50%,-50%);
+  transform-origin:center center;background:var(--paper);border-radius:14px;overflow:hidden;
+  box-shadow:0 30px 90px rgba(0,0,0,.55);}
+
+/* ---------- Slides ---------- */
+.slide{position:absolute;inset:0;width:1280px;height:720px;overflow:hidden;
+  opacity:0;visibility:hidden;transition:opacity .38s ease;background:var(--paper);}
+.slide.active{opacity:1;visibility:visible;z-index:2}
+.pad{position:absolute;inset:0;padding:52px 66px 60px 66px;display:flex;flex-direction:column}
+
+/* header block */
+.eyebrow{display:inline-flex;align-items:center;gap:9px;font-size:14px;font-weight:800;letter-spacing:.14em;
+  text-transform:uppercase;color:var(--tb-dk)}
+.eyebrow .dot{width:9px;height:9px;border-radius:50%;background:var(--gold)}
+.eyebrow .rule{width:34px;height:2px;background:var(--tb-lt);border-radius:2px}
+.h-title{font-size:40px;line-height:1.06;font-weight:800;color:var(--ink);letter-spacing:-.5px;margin-top:12px}
+.h-title.sm{font-size:33px}
+.h-sub{font-size:18px;color:var(--ink-soft);margin-top:10px;line-height:1.5;max-width:1000px}
+.headrule{height:3px;width:74px;background:linear-gradient(90deg,var(--tb),var(--tb-lt));border-radius:3px;margin-top:16px}
+
+/* footer */
+.foot{position:absolute;left:66px;right:66px;bottom:22px;display:flex;justify-content:space-between;align-items:center;
+  font-size:12.5px;color:#8AA6AD;letter-spacing:.03em;border-top:1px solid var(--line);padding-top:10px}
+.foot b{color:var(--tb-dk);font-weight:800}
+
+/* ---------- Title slide ---------- */
+.cover{position:absolute;inset:0;background:
+  linear-gradient(135deg,var(--tb-dpst) 0%,var(--tb-dkr) 46%,var(--tb-dk) 100%);color:#fff;overflow:hidden}
+.cover .mesh{position:absolute;inset:0;opacity:.5;
+  background:radial-gradient(520px 360px at 82% 18%,rgba(224,164,59,.30),transparent 60%),
+             radial-gradient(560px 420px at 12% 92%,rgba(127,184,194,.28),transparent 62%);}
+.cover .grid{position:absolute;inset:0;opacity:.10;
+  background-image:linear-gradient(rgba(255,255,255,.6) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.6) 1px,transparent 1px);
+  background-size:46px 46px;}
+.cover-in{position:absolute;inset:0;padding:70px 80px;display:flex;flex-direction:column;justify-content:center}
+.badge{display:inline-flex;align-items:center;gap:10px;align-self:flex-start;background:rgba(255,255,255,.12);
+  border:1px solid rgba(255,255,255,.25);padding:9px 16px;border-radius:40px;font-size:13px;font-weight:700;letter-spacing:.12em;text-transform:uppercase}
+.badge .sq{width:10px;height:10px;background:var(--gold);border-radius:2px}
+.cover h1{font-size:88px;line-height:.95;font-weight:800;letter-spacing:-2px;margin:22px 0 4px}
+.cover h1 span{color:var(--gold)}
+.cover .lead{font-size:23px;color:#D6EAEE;font-weight:500;max-width:820px;line-height:1.45;margin-top:14px}
+.cover .metarow{display:flex;gap:14px;margin-top:40px;flex-wrap:wrap}
+.metachip{background:rgba(255,255,255,.10);border:1px solid rgba(255,255,255,.20);border-radius:12px;
+  padding:14px 20px;min-width:150px}
+.metachip .k{font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:#9FC6CE;font-weight:700}
+.metachip .v{font-size:20px;font-weight:800;margin-top:4px}
+.cover .hint{position:absolute;bottom:40px;left:80px;font-size:14px;color:#B9D6DC}
+.cover .hint kbd{background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.28);border-radius:6px;
+  padding:2px 9px;font-family:var(--sans);font-weight:700;font-size:12px}
+.book{position:absolute;right:80px;top:50%;transform:translateY(-50%);width:250px;height:340px;border-radius:10px;
+  background:linear-gradient(160deg,#2E626C,#1B454E);box-shadow:0 30px 60px rgba(0,0,0,.5);
+  border:1px solid rgba(255,255,255,.16);padding:26px 22px;display:flex;flex-direction:column;justify-content:space-between}
+.book .spark{position:absolute;top:16px;right:16px;width:52px;height:52px;border-radius:50%;
+  background:radial-gradient(circle,var(--gold),transparent 70%);opacity:.85}
+.book .ch{font-size:120px;font-weight:800;color:rgba(255,255,255,.16);line-height:1}
+.book .bt{font-size:21px;font-weight:800;color:#fff}
+.book .bs{font-size:12.5px;color:#A9CCD3;margin-top:6px;line-height:1.4}
+
+/* ---------- Divider slides ---------- */
+.divider{position:absolute;inset:0;background:linear-gradient(135deg,var(--tb-dk) 0%,var(--tb-dkr) 60%,var(--tb-dpst) 100%);color:#fff;overflow:hidden}
+.divider .mesh{position:absolute;inset:0;opacity:.45;
+  background:radial-gradient(600px 420px at 88% 82%,rgba(224,164,59,.26),transparent 62%),
+            radial-gradient(520px 380px at 8% 12%,rgba(169,209,216,.24),transparent 60%)}
+.divider-in{position:absolute;inset:0;padding:0 92px;display:flex;flex-direction:column;justify-content:center}
+.divider .num{font-size:150px;font-weight:800;line-height:.9;color:rgba(255,255,255,.16);letter-spacing:-4px}
+.divider .lbl{font-size:15px;font-weight:800;letter-spacing:.2em;text-transform:uppercase;color:var(--gold);margin-top:6px}
+.divider h2{font-size:56px;font-weight:800;letter-spacing:-1px;line-height:1.03;margin-top:14px;max-width:900px}
+.divider p{font-size:20px;color:#CFE7EB;margin-top:18px;max-width:760px;line-height:1.5}
+.divider .qrow{display:flex;gap:12px;margin-top:30px;flex-wrap:wrap}
+.divider .qchip{background:rgba(255,255,255,.10);border:1px solid rgba(255,255,255,.2);border-radius:30px;padding:9px 18px;font-size:14px;font-weight:600}
+
+/* ---------- Generic content components ---------- */
+.body{flex:1;display:flex;flex-direction:column;margin-top:22px;min-height:0}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+.grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px}
+.grid4{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:14px}
+.card{background:#fff;border:1px solid var(--line);border-radius:14px;padding:20px 22px;box-shadow:var(--shadow-sm)}
+.card h3{font-size:19px;font-weight:800;color:var(--tb-dkr);margin-bottom:8px;display:flex;align-items:center;gap:10px}
+.card p{font-size:15px;color:var(--ink-soft);line-height:1.5}
+.card .tag{font-size:11px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;padding:3px 9px;border-radius:20px}
+.tag-h{background:#F7E4DF;color:var(--coral-dk)}
+.tag-c{background:#F7EAD0;color:var(--gold-dk)}
+.tag-b{background:var(--tb-pale);color:var(--tb-dk)}
+.icon{width:38px;height:38px;border-radius:10px;background:var(--tb-pale);color:var(--tb-dk);display:flex;
+  align-items:center;justify-content:center;font-weight:800;font-size:18px;flex:none}
+.icon.gold{background:#F7EAD0;color:var(--gold-dk)}
+.icon.coral{background:#F7E4DF;color:var(--coral-dk)}
+
+.deflist{display:flex;flex-direction:column;gap:14px}
+.def{display:flex;gap:16px;background:#fff;border:1px solid var(--line);border-left:5px solid var(--tb);
+  border-radius:12px;padding:16px 20px;box-shadow:var(--shadow-sm)}
+.def .term{font-size:19px;font-weight:800;color:var(--tb-dkr);min-width:150px}
+.def .exp{font-size:15px;color:var(--ink-soft);line-height:1.5;flex:1}
+.def.gold{border-left-color:var(--gold)}
+.def.coral{border-left-color:var(--coral)}
+
+.callout{background:var(--tb-mist);border:1px solid var(--tb-pale);border-radius:12px;padding:16px 20px;
+  font-size:15px;color:var(--tb-dkr);line-height:1.5;display:flex;gap:12px;align-items:flex-start}
+.callout .b{font-weight:800}
+.callout .qm{font-size:26px;line-height:1;color:var(--tb-lt);font-weight:800}
+
+.statrow{display:flex;gap:18px}
+.stat{flex:1;background:#fff;border:1px solid var(--line);border-radius:14px;padding:18px 20px;box-shadow:var(--shadow-sm);text-align:center}
+.stat .big{font-size:44px;font-weight:800;color:var(--tb);line-height:1;letter-spacing:-1px}
+.stat .big.gold{color:var(--gold-dk)}
+.stat .big.coral{color:var(--coral-dk)}
+.stat .cap{font-size:13.5px;color:var(--ink-soft);margin-top:8px;line-height:1.4}
+
+ul.bullets{list-style:none;display:flex;flex-direction:column;gap:11px}
+ul.bullets li{position:relative;padding-left:26px;font-size:16px;color:var(--ink);line-height:1.5}
+ul.bullets li::before{content:"";position:absolute;left:2px;top:8px;width:10px;height:10px;border-radius:50%;
+  background:var(--tb);box-shadow:0 0 0 4px var(--tb-pale)}
+ul.bullets li b{color:var(--tb-dkr)}
+
+/* ---------- Tool frame ---------- */
+.tool{flex:1;display:flex;flex-direction:column;background:linear-gradient(180deg,#fff,#F7FBFC);
+  border:1.5px solid var(--tb-pale);border-radius:16px;box-shadow:var(--shadow);margin-top:14px;overflow:hidden;min-height:0}
+.tool-bar{display:flex;align-items:center;gap:12px;padding:12px 20px;background:var(--tb-dkr);color:#fff;flex:none}
+.tool-bar .tb-badge{background:var(--gold);color:#3a2a06;font-size:11px;font-weight:800;letter-spacing:.1em;
+  text-transform:uppercase;padding:4px 11px;border-radius:20px}
+.tool-bar .tb-title{font-size:16px;font-weight:800}
+.tool-bar .tb-hint{margin-left:auto;font-size:12.5px;color:#B7D4DA;display:flex;align-items:center;gap:7px}
+.tool-bar .tb-hint .cur{width:16px;height:16px;border-radius:50%;background:rgba(255,255,255,.18);display:inline-flex;align-items:center;justify-content:center;font-size:10px}
+.tool-body{flex:1;padding:20px 22px;min-height:0;overflow:hidden}
+
+.btn{font-family:var(--sans);cursor:pointer;border:none;border-radius:10px;font-weight:700;font-size:14px;
+  padding:10px 16px;transition:.15s;background:var(--tb-pale);color:var(--tb-dkr)}
+.btn:hover{background:var(--tb-ltr)}
+.btn.primary{background:var(--tb);color:#fff}
+.btn.primary:hover{background:var(--tb-dk)}
+.btn.ghost{background:transparent;border:1.5px solid var(--line);color:var(--ink-soft)}
+.btn.ghost:hover{border-color:var(--tb-lt);color:var(--tb-dk)}
+.btn.sm{padding:7px 12px;font-size:13px}
+.btn.gold{background:var(--gold);color:#3a2a06}
+.btn.gold:hover{background:var(--gold-dk);color:#fff}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+
+.chipbtn{cursor:pointer;border:1.5px solid var(--line);background:#fff;border-radius:22px;padding:8px 15px;
+  font-size:13.5px;font-weight:600;color:var(--ink-soft);transition:.14s;user-select:none}
+.chipbtn:hover{border-color:var(--tb-lt);color:var(--tb-dk)}
+.chipbtn.on{background:var(--tb);border-color:var(--tb);color:#fff}
+.chipbtn.on.gold{background:var(--gold);border-color:var(--gold);color:#3a2a06}
+.chipbtn.on.coral{background:var(--coral);border-color:var(--coral);color:#fff}
+
+/* range slider */
+input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:8px;border-radius:8px;
+  background:var(--tb-pale);outline:none}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;width:24px;height:24px;border-radius:50%;
+  background:var(--tb);border:3px solid #fff;box-shadow:0 3px 8px rgba(21,53,61,.3);cursor:pointer}
+input[type=range]::-moz-range-thumb{width:24px;height:24px;border-radius:50%;background:var(--tb);border:3px solid #fff;cursor:pointer}
+
+/* meters */
+.meter{height:22px;background:var(--tb-mist);border-radius:12px;overflow:hidden;border:1px solid var(--line)}
+.meter .fill{height:100%;border-radius:12px;transition:width .6s cubic-bezier(.2,.8,.2,1);background:linear-gradient(90deg,var(--tb),var(--tb-lt))}
+
+.pillbadge{display:inline-block;padding:5px 12px;border-radius:20px;font-size:12.5px;font-weight:800;letter-spacing:.04em}
+
+/* small scrollbars for tool internal lists */
+.scrolly{overflow-y:auto}
+.scrolly::-webkit-scrollbar{width:8px}
+.scrolly::-webkit-scrollbar-thumb{background:var(--tb-lt);border-radius:8px}
+.scrolly::-webkit-scrollbar-track{background:transparent}
+
+/* nav controls */
+#nav{position:fixed;bottom:16px;left:50%;transform:translateX(-50%);z-index:50;display:flex;align-items:center;gap:12px;
+  background:rgba(13,33,38,.82);backdrop-filter:blur(6px);border:1px solid rgba(255,255,255,.14);
+  padding:8px 14px;border-radius:40px}
+#nav button{cursor:pointer;border:none;background:rgba(255,255,255,.12);color:#fff;width:34px;height:34px;border-radius:50%;
+  font-size:16px;display:flex;align-items:center;justify-content:center;transition:.15s}
+#nav button:hover{background:var(--tb)}
+#counter{color:#CFE7EB;font-size:13px;font-weight:700;min-width:62px;text-align:center;letter-spacing:.04em}
+#progwrap{position:fixed;top:0;left:0;right:0;height:4px;background:rgba(255,255,255,.06);z-index:60}
+#prog{height:100%;width:0;background:linear-gradient(90deg,var(--gold),var(--tb-lt));transition:width .35s}
+.tocbtn{cursor:pointer;border:none;background:rgba(255,255,255,.12);color:#fff;height:34px;border-radius:18px;
+  font-size:12.5px;font-weight:700;padding:0 14px;display:flex;align-items:center;gap:6px;transition:.15s}
+.tocbtn:hover{background:var(--tb)}
+
+/* TOC overlay */
+#toc{position:fixed;inset:0;z-index:80;background:rgba(9,26,31,.94);display:none;padding:40px 60px;overflow-y:auto}
+#toc.open{display:block}
+#toc h4{color:#fff;font-size:22px;font-weight:800;margin-bottom:18px;letter-spacing:.02em}
+#toc .grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+#toc .tItem{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);border-radius:10px;
+  padding:11px 13px;cursor:pointer;transition:.14s;color:#CFE7EB;font-size:13px}
+#toc .tItem:hover{background:var(--tb);color:#fff;border-color:var(--tb)}
+#toc .tItem b{color:#fff;font-weight:800;margin-right:6px}
+#toc .tItem.tool{border-left:3px solid var(--gold)}
+#toc .close{position:absolute;top:26px;right:34px;color:#fff;font-size:28px;cursor:pointer;background:none;border:none}
+#toc .seclabel{grid-column:1/-1;color:var(--gold);font-size:12px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;margin-top:14px}
+
+/* helper text */
+.small{font-size:13px;color:var(--ink-soft)}
+.muted{color:#8AA6AD}
+.center{text-align:center}
+.mono-num{font-variant-numeric:tabular-nums}
+</style>
+</head>
+<body>
+<div id="progwrap"><div id="prog"></div></div>
+<div id="viewport"><div id="stage">
+
+<!-- ===== SLIDE 1 · COVER ===== -->
+<section class="slide active">
+  <div class="cover">
+    <div class="mesh"></div><div class="grid"></div>
+    <div class="cover-in">
+      <span class="badge"><span class="sq"></span>IS 340 · Management Information Systems · Live Demo</span>
+      <h1>Stress<span>.</span></h1>
+      <div class="lead">Organizational Behavior — Improving Performance and Commitment in the Workplace. An interactive walk through Chapter 5: how demands become stress, and stress becomes strain.</div>
+      <div class="metarow">
+        <div class="metachip"><div class="k">Chapter</div><div class="v">05 · Stress</div></div>
+        <div class="metachip"><div class="k">Learning goals</div><div class="v">5.1 – 5.6</div></div>
+        <div class="metachip"><div class="k">Interactive tools</div><div class="v">10 built-in apps</div></div>
+      </div>
+    </div>
+    <div class="book">
+      <div class="spark"></div>
+      <div class="ch">5</div>
+      <div>
+        <div class="bt">Stress</div>
+        <div class="bs">Colquitt · LePine · Wesson<br>Improving Performance &amp; Commitment</div>
+      </div>
+    </div>
+    <div class="hint">Use <kbd>←</kbd> <kbd>→</kbd> to move · <kbd>space</kbd> advances · click <b>Contents</b> below to jump</div>
+  </div>
+</section>
+
+<!-- ===== SLIDE 2 · LEARNING GOALS ===== -->
+<section class="slide">
+  <div class="pad">
+    <div><span class="eyebrow"><span class="dot"></span>Roadmap<span class="rule"></span></span>
+    <div class="h-title">Six questions this chapter answers</div>
+    <div class="headrule"></div></div>
+    <div class="body">
+      <div class="grid3" style="gap:16px">
+        <div class="card"><h3><span class="icon">5.1</span>What is stress?</h3><p>How stress relates to <b>stressors</b> (the demands) and <b>strains</b> (the consequences).</p></div>
+        <div class="card"><h3><span class="icon">5.2</span>Four types of stressors</h3><p>Hindrance vs. challenge, spanning both work and nonwork life.</p></div>
+        <div class="card"><h3><span class="icon">5.3</span>How people cope</h3><p>Behavioral vs. cognitive methods, problem- vs. emotion-focused.</p></div>
+        <div class="card"><h3><span class="icon gold">5.4</span>Type A Behavior Pattern</h3><p>How individual differences, recovery, and social support shape stress.</p></div>
+        <div class="card"><h3><span class="icon gold">5.5</span>Why stress matters</h3><p>The effect of stress on job performance and organizational commitment.</p></div>
+        <div class="card"><h3><span class="icon coral">5.6</span>Managing stress</h3><p>What organizations can do to reduce stressors and strains.</p></div>
+      </div>
+      <div class="callout" style="margin-top:20px"><span class="qm">“</span><div>Every section below pairs the textbook material with a <b>hands-on tool</b> you can run right on the slide — no coding, no setup. Watch for the <span class="pillbadge" style="background:var(--gold);color:#3a2a06">TRY IT</span> banner.</div></div>
+    </div>
+    <div class="foot"><span><b>IS 340</b> · Chapter 5 — Stress</span><span>Colquitt / LePine / Wesson · pp. 122–159</span></div>
+  </div>
+</section>
+
+<!-- ===== SLIDE 3 · GOLDMAN SACHS ===== -->
+<section class="slide">
+  <div class="pad">
+    <div><span class="eyebrow"><span class="dot"></span>Opening Case<span class="rule"></span></span>
+    <div class="h-title sm">Goldman Sachs: high stakes, high stress</div>
+    <div class="headrule"></div></div>
+    <div class="body">
+      <div class="grid2" style="gap:22px">
+        <div style="display:flex;flex-direction:column;gap:14px">
+          <div class="card"><h3><span class="icon">1869</span>A firm built on potential</h3><p>Founded by Bavarian immigrant Marcus Goldman; Samuel Sachs joined in 1882. It led Sears' 1906 IPO — valuing a firm on <b>future growth</b>, not just tangible assets.</p></div>
+          <div class="card"><h3><span class="icon coral">!</span>Where the stress comes from</h3><p>Heavy workload, demanding clients who expect results, decisions involving <b>colossal sums under uncertainty and risk</b>, and public scrutiny when decisions go wrong.</p></div>
+        </div>
+        <div class="card" style="background:var(--tb-mist);border-color:var(--tb-pale)">
+          <h3 style="color:var(--tb-dkr)"><span class="icon">+</span>How the company helps employees cope</h3>
+          <ul class="bullets" style="margin-top:6px">
+            <li>Counseling &amp; referral services; <b>onsite health centers</b> in some locations</li>
+            <li>Encourages an active lifestyle — reimburses <b>fitness-club memberships</b></li>
+            <li>Helps with nonwork demands via <b>onsite child care</b></li>
+            <li>Allows <b>flexible work arrangements</b> — working from home or alternative hours</li>
+          </ul>
+          <div class="callout" style="margin-top:14px;background:#fff"><div><span class="b">Preview:</span> Goldman later added a <b>resilience program</b> — a preventive approach we'll revisit at the end of the chapter.</div></div>
+        </div>
+      </div>
+    </div>
+    <div class="foot"><span><b>IS 340</b> · Chapter 5 — Stress</span><span>Opening Case · p. 123</span></div>
+  </div>
+</section>
+
+<!-- ===== SLIDE 4 · DIVIDER 5.1 ===== -->
+<section class="slide">
+  <div class="divider"><div class="mesh"></div>
+    <div class="divider-in">
+      <div class="num">5.1</div>
+      <div class="lbl">Learning Goal One</div>
+      <h2>What is stress, and how is it related to stressors and strains?</h2>
+      <p>Stress depends on both the nature of a demand and the person who confronts it — so the same situation stresses different people differently.</p>
+      <div class="qrow"><span class="qchip">Stress</span><span class="qchip">Stressors</span><span class="qchip">Strains</span><span class="qchip">Transactional theory</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== SLIDE 5 · DEFINITIONS ===== -->
+<section class="slide">
+  <div class="pad">
+    <div><span class="eyebrow"><span class="dot"></span>Core Vocabulary<span class="rule"></span></span>
+    <div class="h-title sm">Three words that anchor the whole chapter</div>
+    <div class="headrule"></div></div>
+    <div class="body">
+      <div class="deflist">
+        <div class="def"><div class="term">Stress</div><div class="exp">A <b>psychological response</b> to demands that possess certain stakes for the person and that <b>tax or exceed</b> the person's capacity or resources.</div></div>
+        <div class="def coral"><div class="term">Stressors</div><div class="exp">The <b>demands</b> that cause a person to experience stress. (Coral throughout this deck marks stressors and their negative effects.)</div></div>
+        <div class="def gold"><div class="term">Strains</div><div class="exp">The <b>negative consequences</b> that occur when demands tax or exceed a person's capacity or resources — physiological, psychological, and behavioral.</div></div>
+      </div>
+      <div class="callout" style="margin-top:20px"><span class="qm">“</span><div>Because people differ in how they <b>perceive, evaluate, and cope with</b> stressors, different people can experience very different levels of stress in the <b>exact same situation</b>.</div></div>
+    </div>
+    <div class="foot"><span><b>IS 340</b> · Chapter 5 — Stress</span><span>Section 5.1 · p. 125</span></div>
+  </div>
+</section>
+
+<!-- ===== SLIDE 6 · PREVALENCE ===== -->
+<section class="slide">
+  <div class="pad">
+    <div><span class="eyebrow"><span class="dot"></span>Why It Matters<span class="rule"></span></span>
+    <div class="h-title sm">Job stress is more prevalent than ever</div>
+    <div class="headrule"></div></div>
+    <div class="body">
+      <div class="statrow">
+        <div class="stat"><div class="big">40%</div><div class="cap">of U.S. workers feel their jobs are <b>“very”</b> or <b>“extremely”</b> stressful (NIOSH)</div></div>
+        <div class="stat"><div class="big gold">+21%</div><div class="cap">Managers are ~21% <b>more likely</b> than the average worker to call their job stressful</div></div>
+        <div class="stat"><div class="big coral">10</div><div class="cap">categories are summed to rank a job's stress — deadlines, hazards, life-at-risk, and more</div></div>
+      </div>
+      <div class="callout" style="margin-top:22px"><div><span class="b">The stress-level score</span> in the ranking on the next slide sums points across 10 categories: deadlines, working in the public eye, competitiveness, physical demands, environmental conditions, hazards, own life at risk, another's life at risk, public encounters, and employment change.</div></div>
+      <div style="margin-top:20px" class="small muted center">The next slide is your first interactive tool — explore how 40 real jobs rank on the stress spectrum.</div>
+    </div>
+    <div class="foot"><span><b>IS 340</b> · Chapter 5 — Stress</span><span>Section 5.1 · p. 124</span></div>
+  </div>
+</section>
+
+<!-- ===== SLIDE 7 · TOOL: JOB STRESS EXPLORER ===== -->
+<section class="slide" data-tool="jobs">
+  <div class="pad">
+    <div><span class="eyebrow"><span class="dot"></span>Interactive · Table 5-1<span class="rule"></span></span>
+    <div class="h-title sm">Job Stress Spectrum Explorer</div></div>
+    <div class="tool">
+      <div class="tool-bar"><span class="tb-badge">Try it</span><span class="tb-title">Which jobs are most (and least) stressful?</span>
+        <span class="tb-hint"><span class="cur">👆</span>Tap any job to place it on the spectrum</span></div>
+      <div class="tool-body" id="jobsTool"></div>
+    </div>
+    <div class="foot"><span><b>IS 340</b> · Chapter 5 — Stress</span><span>The Jobs Rated Almanac · p. 124</span></div>
+  </div>
+</section>
+
+<!-- ===== SLIDE 8 · TRANSACTIONAL THEORY ===== -->
+<section class="slide">
+  <div class="pad">
+    <div><span class="eyebrow"><span class="dot"></span>Figure 5-1<span class="rule"></span></span>
+    <div class="h-title sm">The transactional theory of stress</div>
+    <div class="headrule"></div></div>
+    <div class="body">
+      <div class="h-sub" style="margin-top:0">It explains how stressors are <b>perceived and appraised</b>, and how people <b>respond</b> to those appraisals. Two appraisals sit at its heart:</div>
+      <div class="grid2" style="gap:20px;margin-top:18px">
+        <div class="card" style="border-top:5px solid var(--tb)"><h3><span class="icon">1</span>Primary appraisal</h3><p style="font-size:15.5px">“<b>Is this stressful?</b>” You evaluate the significance and meaning of the stressor — and if it does stress you, what it implies for your <b>personal goals and well-being</b>.</p></div>
+        <div class="card" style="border-top:5px solid var(--gold)"><h3><span class="icon gold">2</span>Secondary appraisal</h3><p style="font-size:15.5px">“<b>How can I cope?</b>” You ask <i>what should I do?</i> and <i>what can I do?</i> to deal with the demand — the basis of every coping strategy in Section 5.3.</p></div>
+      </div>
+      <div class="callout" style="margin-top:18px"><div><span class="b">Benign job demands:</span> job demands that tend <b>not</b> to be appraised as stressful. A well-trained cashier ringing routine sales doesn't find the task taxing — so it never triggers the stress response.</div></div>
+    </div>
+    <div class="foot"><span><b>IS 340</b> · Chapter 5 — Stress</span><span>Transactional theory · p. 125</span></div>
+  </div>
+</section>
+
+<!-- ===== SLIDE 9 · CASHIER EXAMPLE ===== -->
+<section class="slide">
+  <div class="pad">
+    <div><span class="eyebrow"><span class="dot"></span>Same job, three appraisals<span class="rule"></span></span>
+    <div class="h-title sm">Three convenience stores, three very different appraisals</div>
+    <div class="headrule"></div></div>
+    <div class="body">
+      <div class="grid3" style="gap:16px">
+        <div class="card"><span class="tag tag-b">Benign</span><h3 style="margin-top:10px"><span class="icon">A</span>The well-run store</h3><p>Routine sales transactions. Well-trained cashiers don't feel taxed, so the demands aren't appraised as stressful at all.</p></div>
+        <div class="card"><span class="tag tag-h">Hindrance</span><h3 style="margin-top:10px"><span class="icon coral">B</span>Broken equipment</h3><p>Registers fail without warning. Cashiers must fix problems while impatient customers wait — blocking their goal of looking competent.</p></div>
+        <div class="card"><span class="tag tag-c">Challenge</span><h3 style="margin-top:10px"><span class="icon gold">C</span>Extra responsibility</h3><p>Higher workload — receiving stock, inventory, training staff — but seen as a chance to <b>learn and earn</b> promotions.</p></div>
+      </div>
+      <div class="callout" style="margin-top:20px"><div>The demand can be objectively similar, yet the <b>appraisal</b> — benign, hindering, or challenging — determines whether (and how) it becomes stress. That distinction sets up the four types of stressors next.</div></div>
+    </div>
+    <div class="foot"><span><b>IS 340</b> · Chapter 5 — Stress</span><span>Section 5.1 · pp. 125–126</span></div>
+  </div>
+</section>
+
+<!-- ===== SLIDE 10 · TOOL: APPRAISAL SIMULATOR ===== -->
+<section class="slide" data-tool="appraise">
+  <div class="pad">
+    <div><span class="eyebrow"><span class="dot"></span>Interactive · Transactional Theory<span class="rule"></span></span>
+    <div class="h-title sm">Appraisal Simulator</div></div>
+    <div class="tool">
+      <div class="tool-bar"><span class="tb-badge">Try it</span><span class="tb-title">Walk a demand through primary &amp; secondary appraisal</span>
+        <span class="tb-hint"><span class="cur">▶</span>Make a choice at each step</span></div>
+      <div class="tool-body" id="appraiseTool"></div>
+    </div>
+    <div class="foot"><span><b>IS 340</b> · Chapter 5 — Stress</span><span>Primary → Secondary appraisal · pp. 125, 129</span></div>
+  </div>
+</section>
+
+<!-- ===== SLIDE 11 · DIVIDER 5.2 ===== -->
+<section class="slide">
+  <div class="divider"><div class="mesh"></div>
+    <div class="divider-in">
+      <div class="num">5.2</div>
+      <div class="lbl">Learning Goal Two</div>
+      <h2>What are the four main types of stressors?</h2>
+      <p>Two flavors — hindrance and challenge — crossed with two domains — work and nonwork.</p>
+      <div class="qrow"><span class="qchip">Hindrance × Challenge</span><span class="qchip">Work × Nonwork</span><span class="qchip">Stressful life events</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== SLIDE 12 · HINDRANCE VS CHALLENGE ===== -->
+<section class="slide">
+  <div class="pad">
+    <div><span class="eyebrow"><span class="dot"></span>The Key Distinction<span class="rule"></span></span>
+    <div class="h-title sm">Not all stressors are created equal</div>
+    <div class="headrule"></div></div>
+    <div class="body">
+      <div class="grid2" style="gap:22px">
+        <div class="card" style="border-top:6px solid var(--coral)">
+          <span class="tag tag-h">Hindrance stressors</span>
+          <h3 style="margin-top:12px;color:var(--coral-dk)">Hurdles that block you</h3>
+          <p style="font-size:15.5px">Stressful demands people perceive as <b>hindering progress</b> toward accomplishments or goals. They most often trigger <b>negative emotions</b> — anxiety and anger.</p>
+        </div>
+        <div class="card" style="border-top:6px solid var(--gold)">
+          <span class="tag tag-c">Challenge stressors</span>
+          <h3 style="margin-top:12px;color:var(--gold-dk)">Opportunities that stretch you</h3>
+          <p style="font-size:15.5px">Stressful demands people perceive as <b>opportunities</b> for learning, growth, and achievement. Though exhausting, they trigger <b>positive emotions</b> — pride and enthusiasm.</p>
+        </div>
+      </div>
+      <div class="callout" style="margin-top:20px"><div>Both types are genuinely stressful. The difference is the <b>meaning</b> the person assigns — and, as Section 5.5 shows, that meaning flips their effect on performance and commitment from harmful to helpful.</div></div>
+    </div>
+    <div class="foot"><span><b>IS 340</b> · Chapter 5 — Stress</span><span>Section 5.2 · p. 126</span></div>
+  </div>
+</section>
+
+<!-- ===== SLIDE 13 · 2x2 FRAMEWORK ===== -->
+<section class="slide">
+  <div class="pad">
+    <div><span class="eyebrow"><span class="dot"></span>Figure 5-1<span class="rule"></span></span>
+    <div class="h-title sm">The stressor framework at a glance</div>
+    <div class="headrule"></div></div>
+    <div class="body">
+      <div class="grid2" style="gap:16px;margin-top:6px">
+        <div class="card" style="border-left:5px solid var(--coral)"><h3 style="color:var(--coral-dk)"><span class="icon coral">W·H</span>Work Hindrance</h3><p style="font-size:14.5px">Role conflict · Role ambiguity · Role overload · Daily hassles</p></div>
+        <div class="card" style="border-left:5px solid var(--gold)"><h3 style="color:var(--gold-dk)"><span class="icon gold">W·C</span>Work Challenge</h3><p style="font-size:14.5px">Time pressure · Work complexity · Work responsibility</p></div>
+        <div class="card" style="border-left:5px solid var(--coral)"><h3 style="color:var(--coral-dk)"><span class="icon coral">N·H</span>Nonwork Hindrance</h3><p style="font-size:14.5px">Work–family conflict · Negative life events · Financial uncertainty</p></div>
+        <div class="card" style="border-left:5px solid var(--gold)"><h3 style="color:var(--gold-dk)"><span class="icon gold">N·C</span>Nonwork Challenge</h3><p style="font-size:14.5px">Family time demands · Personal development · Positive life events</p></div>
+      </div>
+      <div class="callout" style="margin-top:18px"><div>All four feed into a single <b>primary appraisal</b> (“Is this stressful?”) and <b>secondary appraisal</b> (“How can I cope?”) that produce the experience of stress. You'll classify all twelve stressors yourself in two slides.</div></div>
+    </div>
+    <div class="foot"><span><b>IS 340</b> · Chapter 5 — Stress</span><span>Figure 5-1 · p. 125</span></div>
+  </div>
+</section>
+
+<!-- ===== SLIDE 14 · WORK HINDRANCE ===== -->
+<section class="slide">
+  <div class="pad">
+    <div><span class="eyebrow"><span class="dot"></span>Work · Hindrance<span class="rule"></span></span>
+    <div class="h-title sm">Roles that get in your way</div>
+    <div class="headrule"></div></div>
+    <div class="body">
+      <div class="grid4">
+        <div class="card"><h3><span class="icon coral">⚔</span>Role conflict</h3><p>Conflicting expectations others hold of you. A call-center rep told to be <b>fast</b> yet <b>thorough</b> can't satisfy both.</p></div>
+        <div class="card"><h3><span class="icon coral">?</span>Role ambiguity</h3><p>Lack of information about what a role requires — and unpredictable consequences. Common for new employees and vague courses.</p></div>
+        <div class="card"><h3><span class="icon coral">⧉</span>Role overload</h3><p>So many demanding roles that some can't be done well. Now <b>more common</b> than role conflict or ambiguity.</p></div>
+        <div class="card"><h3><span class="icon coral">•••</span>Daily hassles</h3><p>Minor day-to-day demands that pile up — needless paperwork, broken equipment, useless emails.</p></div>
+      </div>
+      <div class="callout" style="margin-top:20px"><div><span class="b">Scale of the problem:</span> 80-hour weeks are becoming the norm in investment banking, consulting, and law — yet those employees say they still couldn't finish the work even at twice the hours.</div></div>
+    </div>
+    <div class="foot"><span><b>IS 340</b> · Chapter 5 — Stress</span><span>Work hindrance stressors · pp. 126–127</span></div>
+  </div>
+</section>
+
+<!-- ===== SLIDE 15 · WORK CHALLENGE ===== -->
+<section class="slide">
+  <div class="pad">
+    <div><span class="eyebrow"><span class="dot"></span>Work · Challenge<span class="rule"></span></span>
+    <div class="h-title sm">Demands worth striving for</div>
+    <div class="headrule"></div></div>
+    <div class="body">
+      <div class="grid3">
+        <div class="card"><h3><span class="icon gold">⏱</span>Time pressure</h3><p>A strong sense that you don't quite have enough time. Stressful, yet meeting the deadline is <b>intrinsically satisfying</b> — like an architect watching his work rise over the skyline.</p></div>
+        <div class="card"><h3><span class="icon gold">◈</span>Work complexity</h3><p>Work whose knowledge, skills, and abilities <b>tax or exceed</b> your current capability. Being “stretched” in a developmental assignment is worth the discomfort.</p></div>
+        <div class="card"><h3><span class="icon gold">◎</span>Work responsibility</h3><p>The nature of your obligations to others. An air-traffic controller accountable for thousands of lives feels this acutely — stressful, but meaningful.</p></div>
+      </div>
+      <div class="callout" style="margin-top:20px"><div>As with time pressure and complexity, people tend to evaluate high responsibility as <b>both</b> stressful <b>and</b> potentially positive — the hallmark of a challenge stressor.</div></div>
+    </div>
+    <div class="foot"><span><b>IS 340</b> · Chapter 5 — Stress</span><span>Work challenge stressors · pp. 127–128</span></div>
+  </div>
+</section>
+
+<!-- ===== SLIDE 16 · NONWORK HINDRANCE ===== -->
+<section class="slide">
+  <div class="pad">
+    <div><span class="eyebrow"><span class="dot"></span>Nonwork · Hindrance<span class="rule"></span></span>
+    <div class="h-title sm">Stress that spills over from outside work</div>
+    <div class="headrule"></div></div>
+    <div class="body">
+      <div class="grid3">
+        <div class="card"><h3><span class="icon coral">⇄</span>Work–family conflict</h3><p>A special role conflict where work demands hinder family roles — <b>or vice versa</b>. It can spiral: home conflict makes work harder, which makes home worse.</p></div>
+        <div class="card"><h3><span class="icon coral">☂</span>Negative life events</h3><p>Life changes appraised as hindrances — the death of a loved one, divorce, a jail term, or a personal illness. See the Holmes–Rahe scale ahead.</p></div>
+        <div class="card"><h3><span class="icon coral">$</span>Financial uncertainty</h3><p>Uncertainty about losing livelihood, savings, or the ability to pay expenses — highly relevant in recessions and downturns.</p></div>
+      </div>
+      <div class="callout" style="margin-top:20px"><div>Interestingly, both work-to-family and family-to-work conflict tend to be <b>higher</b> for employees who are strongly embedded in their organizations and communities.</div></div>
+    </div>
+    <div class="foot"><span><b>IS 340</b> · Chapter 5 — Stress</span><span>Nonwork hindrance stressors · pp. 128–129</span></div>
+  </div>
+</section>
+
+<!-- ===== SLIDE 17 · NONWORK CHALLENGE ===== -->
+<section class="slide">
+  <div class="pad">
+    <div><span class="eyebrow"><span class="dot"></span>Nonwork · Challenge<span class="rule"></span></span>
+    <div class="h-title sm">Demands outside work that help you grow</div>
+    <div class="headrule"></div></div>
+    <div class="body">
+      <div class="grid3">
+        <div class="card"><h3><span class="icon gold">♥</span>Family time demands</h3><p>Time committed to family activities — traveling, social events, hosting, home improvements. Demanding, yet positive.</p></div>
+        <div class="card"><h3><span class="icon gold">↗</span>Personal development</h3><p>Formal education, music lessons, sports training, hobbies, local government, or volunteer work that fosters growth.</p></div>
+        <div class="card"><h3><span class="icon gold">✦</span>Positive life events</h3><p>Marriage, a new family member, graduating from school — stressful in their own way, but tied to <b>positive</b> emotions.</p></div>
+      </div>
+      <div class="callout" style="margin-top:20px"><div>The Holmes–Rahe scale (next tool) scores marriage at <b>50</b>, pregnancy at <b>40</b>, and an outstanding achievement at <b>28</b> — proof that even good news carries a stress load.</div></div>
+    </div>
+    <div class="foot"><span><b>IS 340</b> · Chapter 5 — Stress</span><span>Nonwork challenge stressors · p. 129</span></div>
+  </div>
+</section>
+
+<!-- ===== SLIDE 18 · TOOL: STRESSOR SORTING ===== -->
+<section class="slide" data-tool="sort">
+  <div class="pad">
+    <div><span class="eyebrow"><span class="dot"></span>Interactive · Figure 5-1<span class="rule"></span></span>
+    <div class="h-title sm">Stressor Sorting Challenge</div></div>
+    <div class="tool">
+      <div class="tool-bar"><span class="tb-badge">Try it</span><span class="tb-title">Drop each stressor into the right quadrant</span>
+        <span class="tb-hint"><span class="cur">🎯</span>Score updates as you go</span></div>
+      <div class="tool-body" id="sortTool"></div>
+    </div>
+    <div class="foot"><span><b>IS 340</b> · Chapter 5 — Stress</span><span>Hindrance/Challenge × Work/Nonwork · p. 125</span></div>
+  </div>
+</section>
+
+<!-- ===== SLIDE 19 · STRESSFUL LIFE EVENTS ===== -->
+<section class="slide">
+  <div class="pad">
+    <div><span class="eyebrow"><span class="dot"></span>Table 5-2<span class="rule"></span></span>
+    <div class="h-title sm">Measuring life stress: the Social Readjustment Rating Scale</div>
+    <div class="headrule"></div></div>
+    <div class="body">
+      <div class="h-sub" style="margin-top:0">Holmes &amp; Rahe scored how much readjustment common life events demand. The higher the total for a person's recent year, the greater the risk that stress affects health and work.</div>
+      <div class="grid3" style="gap:16px;margin-top:18px">
+        <div class="stat"><div class="big coral">100</div><div class="cap">Death of a spouse — the highest-rated single event on the scale</div></div>
+        <div class="stat"><div class="big">50</div><div class="cap">Marriage — a positive life event that still demands major readjustment</div></div>
+        <div class="stat"><div class="big gold">11</div><div class="cap">Minor violations of the law — the lowest-rated event on the scale</div></div>
+      </div>
+      <div class="callout" style="margin-top:20px"><div>Many of the most stressful events <b>don't happen at work</b> at all — they're family events. Add up your own recent year on the next slide.</div></div>
+    </div>
+    <div class="foot"><span><b>IS 340</b> · Chapter 5 — Stress</span><span>Holmes &amp; Rahe (1967) · p. 129</span></div>
+  </div>
+</section>
+
+<!-- ===== SLIDE 20 · TOOL: HOLMES-RAHE CALCULATOR ===== -->
+<section class="slide" data-tool="srrs">
+  <div class="pad">
+    <div><span class="eyebrow"><span class="dot"></span>Interactive · Table 5-2<span class="rule"></span></span>
+    <div class="h-title sm">Life Stress Calculator</div></div>
+    <div class="tool">
+      <div class="tool-bar"><span class="tb-badge">Try it</span><span class="tb-title">Check the events you've faced in the past year</span>
+        <span class="tb-hint"><span class="cur">Σ</span>Your total scores live</span></div>
+      <div class="tool-body" id="srrsTool"></div>
+    </div>
+    <div class="foot"><span><b>IS 340</b> · Chapter 5 — Stress</span><span>Social Readjustment Rating Scale · p. 129</span></div>
+  </div>
+</section>
+
+<!-- ===== SLIDE 21 · DIVIDER 5.3 ===== -->
+<section class="slide">
+  <div class="divider"><div class="mesh"></div>
+    <div class="divider-in">
+      <div class="num">5.3</div>
+      <div class="lbl">Learning Goal Three</div>
+      <h2>How do individuals cope with stress?</h2>
+      <p>After appraising a demand, people ask “What should I do?” and “What can I do?” — the secondary appraisal that drives every coping strategy.</p>
+      <div class="qrow"><span class="qchip">Behavioral × Cognitive</span><span class="qchip">Problem × Emotion focused</span><span class="qchip">Sense of control</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== SLIDE 22 · COPING DEFINED ===== -->
+<section class="slide">
+  <div class="pad">
+    <div><span class="eyebrow"><span class="dot"></span>Definition<span class="rule"></span></span>
+    <div class="h-title sm">Coping = the behaviors and thoughts you use to manage demands</div>
+    <div class="headrule"></div></div>
+    <div class="body">
+      <div class="def" style="margin-bottom:18px"><div class="term">Coping</div><div class="exp">The <b>behaviors and thoughts</b> people use to manage both the stressful demands they face and the <b>emotions</b> associated with those demands.</div></div>
+      <div class="h-sub" style="margin-top:0">Coping activities fall into four categories built from two independent dimensions:</div>
+      <div class="grid2" style="gap:20px;margin-top:16px">
+        <div class="card" style="border-top:5px solid var(--tb)"><h3>Dimension 1 — Method</h3><p style="font-size:15.5px"><b>Behavioral</b> (physical activities to deal with the situation) vs. <b>Cognitive</b> (the thoughts involved in dealing with it).</p></div>
+        <div class="card" style="border-top:5px solid var(--gold)"><h3>Dimension 2 — Focus</h3><p style="font-size:15.5px"><b>Problem-focused</b> (manage the situation itself) vs. <b>Emotion-focused</b> (manage your emotional reactions to it).</p></div>
+      </div>
+    </div>
+    <div class="foot"><span><b>IS 340</b> · Chapter 5 — Stress</span><span>Section 5.3 · pp. 129–130</span></div>
+  </div>
+</section>
+
+<!-- ===== SLIDE 23 · COPING MATRIX ===== -->
+<section class="slide">
+  <div class="pad">
+    <div><span class="eyebrow"><span class="dot"></span>Table 5-3<span class="rule"></span></span>
+    <div class="h-title sm">Four ways to cope</div>
+    <div class="headrule"></div></div>
+    <div class="body">
+      <div style="display:grid;grid-template-columns:130px 1fr 1fr;gap:12px;margin-top:8px">
+        <div></div>
+        <div class="pillbadge center" style="background:var(--tb);color:#fff;padding:10px">PROBLEM-FOCUSED</div>
+        <div class="pillbadge center" style="background:var(--gold);color:#3a2a06;padding:10px">EMOTION-FOCUSED</div>
+
+        <div class="pillbadge" style="background:var(--tb-dkr);color:#fff;display:flex;align-items:center;justify-content:center">BEHAVIORAL</div>
+        <div class="card" style="padding:16px"><ul class="bullets"><li>Working harder</li><li>Seeking assistance</li><li>Acquiring additional resources</li></ul></div>
+        <div class="card" style="padding:16px"><ul class="bullets"><li>Engaging in alternative activities</li><li>Seeking support</li><li>Venting anger</li></ul></div>
+
+        <div class="pillbadge" style="background:var(--tb-dkr);color:#fff;display:flex;align-items:center;justify-content:center">COGNITIVE</div>
+        <div class="card" style="padding:16px"><ul class="bullets"><li>Strategizing</li><li>Self-motivating</li><li>Changing priorities</li></ul></div>
+        <div class="card" style="padding:16px"><ul class="bullets"><li>Avoiding, distancing, ignoring</li><li>Looking for the positive in the negative</li><li>Reappraising</li></ul></div>
+      </div>
+    </div>
+    <div class="foot"><span><b>IS 340</b> · Chapter 5 — Stress</span><span>Latack &amp; Havlovic (1992) · p. 130</span></div>
+  </div>
+</section>
+
+<!-- ===== SLIDE 24 · PROBLEM VS EMOTION ===== -->
+<section class="slide">
+  <div class="pad">
+    <div><span class="eyebrow"><span class="dot"></span>Which focus wins?<span class="rule"></span></span>
+    <div class="h-title sm">Problem-focused vs. emotion-focused — and why it matters</div>
+    <div class="headrule"></div></div>
+    <div class="body">
+      <div class="grid2" style="gap:20px">
+        <div class="card" style="border-left:5px solid var(--tb)"><h3><span class="icon">✓</span>Problem-focused coping</h3><p style="font-size:15.5px">Behaviors and cognitions aimed at the <b>demand itself</b> — working harder or devising a smarter strategy. Managers want subordinates to cope this way with heavy workloads.</p></div>
+        <div class="card" style="border-left:5px solid var(--gold)"><h3><span class="icon gold">♻</span>Emotion-focused coping</h3><p style="font-size:15.5px">Managing your <b>emotional reactions</b> — distancing, reappraising, venting. Sometimes functional (protecting self-esteem), but the underlying demand <b>remains</b>.</p></div>
+      </div>
+      <div class="callout" style="margin-top:20px"><div><span class="b">The trade-off:</span> even when reappraising successfully avoids unpleasant emotions, the <b>problem that triggered the appraisal is still there</b>. Emotion-focused coping treats the feeling, not the cause.</div></div>
+    </div>
+    <div class="foot"><span><b>IS 340</b> · Chapter 5 — Stress</span><span>Section 5.3 · pp. 130–131</span></div>
+  </div>
+</section>
+
+<!-- ===== SLIDE 25 · TOOL: COPING ADVISOR ===== -->
+<section class="slide" data-tool="cope">
+  <div class="pad">
+    <div><span class="eyebrow"><span class="dot"></span>Interactive · Table 5-3<span class="rule"></span></span>
+    <div class="h-title sm">Coping Strategy Advisor</div></div>
+    <div class="tool">
+      <div class="tool-bar"><span class="tb-badge">Try it</span><span class="tb-title">Answer two questions — get your coping quadrant</span>
+        <span class="tb-hint"><span class="cur">◆</span>Maps you onto Table 5-3</span></div>
+      <div class="tool-body" id="copeTool"></div>
+    </div>
+    <div class="foot"><span><b>IS 340</b> · Chapter 5 — Stress</span><span>Method × Focus · p. 130</span></div>
+  </div>
+</section>
+
+<!-- ===== SLIDE 26 · CHOOSING A STRATEGY ===== -->
+<section class="slide">
+  <div class="pad">
+    <div><span class="eyebrow"><span class="dot"></span>What drives the choice<span class="rule"></span></span>
+    <div class="h-title sm">Why people pick one coping strategy over another</div>
+    <div class="headrule"></div></div>
+    <div class="body">
+      <div class="grid4">
+        <div class="card"><h3><span class="icon">1</span>Beliefs</h3><p>People choose the strategy they believe is <b>most likely to work</b> for the demand they face.</p></div>
+        <div class="card"><h3><span class="icon">2</span>Priority</h3><p>Focus energy on the most <b>immediate or important</b> demands; avoid or ignore others for now.</p></div>
+        <div class="card"><h3><span class="icon">3</span>Control</h3><p>Belief that a strategy gives <b>control</b> over the stressor favors problem-focused coping.</p></div>
+        <div class="card"><h3><span class="icon coral">4</span>Hindrance</h3><p>People feel <b>less control</b> over hindrances than challenges — pushing them toward emotion-focused coping.</p></div>
+      </div>
+      <div class="callout" style="margin-top:20px"><div><span class="b">Example — “Trouble with boss.”</span> You'd want to change your boss's behavior (problem-focused), but bosses hold power and complaining upward may not be an option. The resulting anxiety and hopelessness erode control, steering you toward <b>emotion-focused</b> coping.</div></div>
+    </div>
+    <div class="foot"><span><b>IS 340</b> · Chapter 5 — Stress</span><span>Section 5.3 · pp. 131–132</span></div>
+  </div>
+</section>
+
+<!-- ===== SLIDE 27 · OB INTERNATIONALLY ===== -->
+<section class="slide">
+  <div class="pad">
+    <div><span class="eyebrow"><span class="dot"></span>OB Internationally<span class="rule"></span></span>
+    <div class="h-title sm">Coping with the stress of an expatriate assignment</div>
+    <div class="headrule"></div></div>
+    <div class="body">
+      <div class="statrow">
+        <div class="stat"><div class="big">47%</div><div class="cap">of companies reported <b>more</b> expatriate assignments than the prior year</div></div>
+        <div class="stat"><div class="big coral">40%</div><div class="cap">of American expatriates <b>return home early</b> — a behavioral way of coping</div></div>
+        <div class="stat"><div class="big coral">$100K</div><div class="cap">estimated cost to the host organization of <b>each</b> early return</div></div>
+      </div>
+      <div class="callout" style="margin-top:22px"><div><span class="b">The fix:</span> cross-cultural training helps expatriates appreciate cultural differences and interact comfortably with host-country nationals — yet many U.S. firms offer <b>none</b>, and what exists often teaches language over cultural understanding.</div></div>
+    </div>
+    <div class="foot"><span><b>IS 340</b> · Chapter 5 — Stress</span><span>OB Internationally · p. 131</span></div>
+  </div>
+</section>
+
+<!-- ===== SLIDE 28 · DIVIDER STRAIN ===== -->
+<section class="slide">
+  <div class="divider"><div class="mesh"></div>
+    <div class="divider-in">
+      <div class="num">↯</div>
+      <div class="lbl">The Experience of Strain</div>
+      <h2>How exactly does stress cause strain?</h2>
+      <p>The very mechanism that helps your body perform under demand is the one that harms you when demands don't ramp down.</p>
+      <div class="qrow"><span class="qchip">Physiological</span><span class="qchip">Psychological</span><span class="qchip">Behavioral</span><span class="qchip">Burnout</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== SLIDE 29 · MECHANISM ===== -->
+<section class="slide">
+  <div class="pad">
+    <div><span class="eyebrow"><span class="dot"></span>Case + Mechanism<span class="rule"></span></span>
+    <div class="h-title sm">When adaptation turns toxic</div>
+    <div class="headrule"></div></div>
+    <div class="body">
+      <div class="grid2" style="gap:22px">
+        <div class="card" style="border-left:5px solid var(--coral)"><h3><span class="icon coral">RIVA</span>Naomi Henderson, CEO</h3><p style="font-size:15.5px">Working <b>120 hours a week</b>, she woke one night literally unable to move — paralyzed. The ER diagnosis: <b>stress</b>. Prescription: bed rest, 14 hours a day, for six weeks.</p></div>
+        <div class="card" style="border-left:5px solid var(--tb)"><h3><span class="icon">⚙</span>The body's response</h3><p style="font-size:15.5px">Under a stressor, the body secretes chemicals that raise heart rate and blood pressure, redirecting blood to the brain and muscles. If those chemicals stay elevated from <b>prolonged exposure</b>, the body begins to break down.</p></div>
+      </div>
+      <div class="callout" style="margin-top:20px"><div>The same mechanism that lets you <b>function under pressure</b> is what ultimately causes the exhaustion, irritability, and aches of heavy stress. Those breakdowns come in three varieties →</div></div>
+    </div>
+    <div class="foot"><span><b>IS 340</b> · Chapter 5 — Stress</span><span>The experience of strain · pp. 132–134</span></div>
+  </div>
+</section>
+
+<!-- ===== SLIDE 30 · THREE TYPES OF STRAIN ===== -->
+<section class="slide">
+  <div class="pad">
+    <div><span class="eyebrow"><span class="dot"></span>Figure 5-2<span class="rule"></span></span>
+    <div class="h-title sm">Three varieties of strain</div>
+    <div class="headrule"></div></div>
+    <div class="body">
+      <div class="grid3">
+        <div class="card" style="border-top:5px solid var(--tb)"><h3><span class="icon">♡</span>Physiological</h3><p>Illness, high blood pressure, coronary artery disease, headaches, back pain, stomachaches.</p></div>
+        <div class="card" style="border-top:5px solid var(--tb-lt)"><h3><span class="icon">◈</span>Psychological</h3><p>Depression, anxiety, irritability, forgetfulness, inability to think clearly, reduced confidence, burnout.</p></div>
+        <div class="card" style="border-top:5px solid var(--coral)"><h3><span class="icon coral">◐</span>Behavioral</h3><p>Alcohol and drug use, teeth grinding, compulsive behaviors, overeating.</p></div>
+      </div>
+      <div class="callout" style="margin-top:20px"><div><span class="b">Don't dismiss it because you're young:</span> high-pressure deadlines raise the chance of a heart attack in the next 24 hours <b>sixfold (+600%)</b>, and stress measured today can surface as chronic disease eight years later.</div></div>
+    </div>
+    <div class="foot"><span><b>IS 340</b> · Chapter 5 — Stress</span><span>Kahn &amp; Byosiere · p. 134</span></div>
+  </div>
+</section>
+
+<!-- ===== SLIDE 31 · TOOL: STRAIN BODY ===== -->
+<section class="slide" data-tool="body">
+  <div class="pad">
+    <div><span class="eyebrow"><span class="dot"></span>Interactive · Figure 5-2<span class="rule"></span></span>
+    <div class="h-title sm">Strain &amp; the Body Systems Explorer</div></div>
+    <div class="tool">
+      <div class="tool-bar"><span class="tb-badge">Try it</span><span class="tb-title">Click a system to see how stress attacks it</span>
+        <span class="tb-hint"><span class="cur">🫀</span>Six systems · three strain families</span></div>
+      <div class="tool-body" id="bodyTool"></div>
+    </div>
+    <div class="foot"><span><b>IS 340</b> · Chapter 5 — Stress</span><span>Physiological · Psychological · Behavioral · pp. 134–135</span></div>
+  </div>
+</section>
+
+<!-- ===== SLIDE 32 · BURNOUT ===== -->
+<section class="slide">
+  <div class="pad">
+    <div><span class="eyebrow"><span class="dot"></span>Psychological Strain<span class="rule"></span></span>
+    <div class="h-title sm">Burnout: the strain that ends careers</div>
+    <div class="headrule"></div></div>
+    <div class="body">
+      <div class="def" style="margin-bottom:16px"><div class="term">Burnout</div><div class="exp">The <b>emotional, mental, and physical exhaustion</b> that results from having to cope with stressful demands on an <b>ongoing basis</b>.</div></div>
+      <div class="grid2" style="gap:20px">
+        <div class="card"><h3><span class="icon coral">🏈</span>Brett Favre's revolving door</h3><p style="font-size:15px">After 17 seasons he retired in 2008, saying he was “just tired of all the stress.” He un-retired, re-retired, un-retired again — a familiar pattern after leaving an exciting job to burnout.</p></div>
+        <div class="card"><h3><span class="icon">↺</span>Why the break tempts a return</h3><p style="font-size:15px">A break from work stressors lets a person rest and recharge — but it also gives <b>free time to remember the excitement and challenge</b> of performing, luring them back.</p></div>
+      </div>
+      <div class="callout" style="margin-top:18px"><div>Psychological strains also include reduced self-confidence, lack of creativity, memory loss, and — no surprise given the list — a loss of one's sense of humor.</div></div>
+    </div>
+    <div class="foot"><span><b>IS 340</b> · Chapter 5 — Stress</span><span>Burnout · p. 135</span></div>
+  </div>
+</section>
+
+<!-- ===== SLIDE 33 · DIVIDER 5.4 ===== -->
+<section class="slide">
+  <div class="divider"><div class="mesh"></div>
+    <div class="divider-in">
+      <div class="num">5.4</div>
+      <div class="lbl">Learning Goal Four</div>
+      <h2>How does the Type A Behavior Pattern influence the stress process?</h2>
+      <p>People differ in how they react to demands. Three individual factors — Type A, recovery, and social support — reshape the whole stress process.</p>
+      <div class="qrow"><span class="qchip">Type A vs. Type B</span><span class="qchip">Recovery</span><span class="qchip">Social support</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== SLIDE 34 · TYPE A ===== -->
+<section class="slide">
+  <div class="pad">
+    <div><span class="eyebrow"><span class="dot"></span>Individual Differences<span class="rule"></span></span>
+    <div class="h-title sm">The Type A Behavior Pattern</div>
+    <div class="headrule"></div></div>
+    <div class="body">
+      <div class="def" style="margin-bottom:18px"><div class="term">Type A</div><div class="exp">A strong sense of <b>time urgency</b> — impatient, hard-driving, competitive, controlling, aggressive, and even hostile. If you walk, talk, and eat quickly and get annoyed with slow people, chances are you lean Type A.</div></div>
+      <div class="grid2" style="gap:20px">
+        <div class="card" style="border-top:5px solid var(--coral)"><h3 style="color:var(--coral-dk)">Type A</h3><p style="font-size:15.5px">Perceives higher stress levels and is <b>more sensitive</b> to the stress experienced.</p></div>
+        <div class="card" style="border-top:5px solid var(--tb)"><h3 style="color:var(--tb-dk)">Type B</h3><p style="font-size:15.5px">Senses <b>less</b> stress in life and is <b>less sensitive</b> to the stress that is experienced.</p></div>
+      </div>
+      <div class="callout" style="margin-top:18px"><div>You'll take the 12-item Type A questionnaire yourself in two slides. Sum ≥ 60 leans Type A; ≤ 36 leans Type B.</div></div>
+    </div>
+    <div class="foot"><span><b>IS 340</b> · Chapter 5 — Stress</span><span>Type A Behavior Pattern · p. 135</span></div>
+  </div>
+</section>
+
+<!-- ===== SLIDE 35 · THREE WAYS TYPE A ===== -->
+<section class="slide">
+  <div class="pad">
+    <div><span class="eyebrow"><span class="dot"></span>Why Type A matters<span class="rule"></span></span>
+    <div class="h-title sm">Type A shapes stressors, stress, and strains</div>
+    <div class="headrule"></div></div>
+    <div class="body">
+      <div class="grid3">
+        <div class="card"><h3><span class="icon coral">1</span>More stressors</h3><p>Hard-driving Type A behaviors get <b>rewarded with more work</b>, and their aggressiveness invites interpersonal conflict — a major stressor.</p></div>
+        <div class="card"><h3><span class="icon coral">2</span>More stress</h3><p>Competitiveness makes them <b>hypersensitive</b> to demands, so they appraise more demands as stressful rather than benign.</p></div>
+        <div class="card"><h3><span class="icon coral">3</span>More strains</h3><p>Directly linked to <b>coronary heart disease</b> and other physiological, psychological, and behavioral strains.</p></div>
+      </div>
+      <div class="callout" style="margin-top:20px"><div>The link to heart disease isn't strong enough to say “call 911 if you're Type A” — but it does mean the <b>risk of these problems is significantly higher</b> for people who habitually engage in Type A behavior.</div></div>
+    </div>
+    <div class="foot"><span><b>IS 340</b> · Chapter 5 — Stress</span><span>Type A · pp. 136–137</span></div>
+  </div>
+</section>
+
+<!-- ===== SLIDE 36 · TOOL: TYPE A ASSESSMENT ===== -->
+<section class="slide" data-tool="typea">
+  <div class="pad">
+    <div><span class="eyebrow"><span class="dot"></span>Interactive · OB Assessments<span class="rule"></span></span>
+    <div class="h-title sm">Type A Behavior Assessment</div></div>
+    <div class="tool">
+      <div class="tool-bar"><span class="tb-badge">Try it</span><span class="tb-title">Rate 12 statements · get your Type A score</span>
+        <span class="tb-hint"><span class="cur">1–7</span>Strongly disagree → strongly agree</span></div>
+      <div class="tool-body" id="typeaTool"></div>
+    </div>
+    <div class="foot"><span><b>IS 340</b> · Chapter 5 — Stress</span><span>Friedman &amp; Rosenman · p. 136</span></div>
+  </div>
+</section>
+
+<!-- ===== SLIDE 37 · RECOVERY ===== -->
+<section class="slide">
+  <div class="pad">
+    <div><span class="eyebrow"><span class="dot"></span>Second Individual Factor<span class="rule"></span></span>
+    <div class="h-title sm">Recovery: not all downtime is equal</div>
+    <div class="headrule"></div></div>
+    <div class="body">
+      <div class="def" style="margin-bottom:16px"><div class="term">Recovery</div><div class="exp">The degree to which energies used for coping with work demands are <b>replenished</b> by a period of rest or relief from work. Deplete it without restocking and tomorrow's demands feel even more stressful.</div></div>
+      <div class="grid2" style="gap:20px">
+        <div class="card" style="border-left:5px solid var(--gold)"><h3><span class="icon gold">↑</span>Restores energy</h3><p style="font-size:15px">Relaxing leisure — seeing friends, reading, watching TV, going for a hike. Quality <b>sleep</b> also lowers anxiety, depression, and fatigue.</p></div>
+        <div class="card" style="border-left:5px solid var(--coral)"><h3><span class="icon coral">↓</span>Drains energy</h3><p style="font-size:15px">Effortful off-work activity — household chores, grocery shopping, driving kids around, prepping for work. These require physical, cognitive, or emotional effort.</p></div>
+      </div>
+      <div class="callout" style="margin-top:18px"><div>The key insight: “time off” only helps if it's genuinely <b>restorative</b>. A weekend of errands can leave you as depleted as a workday.</div></div>
+    </div>
+    <div class="foot"><span><b>IS 340</b> · Chapter 5 — Stress</span><span>Recovery · p. 137</span></div>
+  </div>
+</section>
+
+<!-- ===== SLIDE 38 · SOCIAL SUPPORT ===== -->
+<section class="slide">
+  <div class="pad">
+    <div><span class="eyebrow"><span class="dot"></span>Third Individual Factor<span class="rule"></span></span>
+    <div class="h-title sm">Social support comes in two forms</div>
+    <div class="headrule"></div></div>
+    <div class="body">
+      <div class="def" style="margin-bottom:16px"><div class="term">Social support</div><div class="exp">The help people receive when confronted with stressful demands — from coworkers, supervisors, family, and friends.</div></div>
+      <div class="grid2" style="gap:20px">
+        <div class="card" style="border-top:5px solid var(--tb)"><h3><span class="icon">🛠</span>Instrumental support</h3><p style="font-size:15.5px">Help that <b>addresses the demand directly</b> — a coworker taking over some of your overload or showing you a faster way to do the work.</p></div>
+        <div class="card" style="border-top:5px solid var(--gold)"><h3><span class="icon gold">🤝</span>Emotional support</h3><p style="font-size:15.5px">Help with the <b>emotional distress</b> that accompanies the demand — a supervisor showing interest and being understanding and sympathetic.</p></div>
+      </div>
+      <div class="callout" style="margin-top:18px"><div><span class="b">Social support is a “moderator.”</span> The stressor–strain relationship is <b>weaker</b> at high support and <b>stronger</b> at low support — the buffering effect you'll test next.</div></div>
+    </div>
+    <div class="foot"><span><b>IS 340</b> · Chapter 5 — Stress</span><span>Social support · pp. 137–138</span></div>
+  </div>
+</section>
+
+<!-- ===== SLIDE 39 · TOOL: SUPPORT BUFFER ===== -->
+<section class="slide" data-tool="buffer">
+  <div class="pad">
+    <div><span class="eyebrow"><span class="dot"></span>Interactive · The buffering effect<span class="rule"></span></span>
+    <div class="h-title sm">Social Support Buffer Simulator</div></div>
+    <div class="tool">
+      <div class="tool-bar"><span class="tb-badge">Try it</span><span class="tb-title">Drag support up and watch strain flatten</span>
+        <span class="tb-hint"><span class="cur">↔</span>Support moderates stressor → strain</span></div>
+      <div class="tool-body" id="bufferTool"></div>
+    </div>
+    <div class="foot"><span><b>IS 340</b> · Chapter 5 — Stress</span><span>Moderating (buffering) effect · p. 138</span></div>
+  </div>
+</section>
+
+<!-- ===== SLIDE 40 · FULL MODEL 5-3 ===== -->
+<section class="slide">
+  <div class="pad">
+    <div><span class="eyebrow"><span class="dot"></span>Figure 5-3<span class="rule"></span></span>
+    <div class="h-title sm">Why are some employees more “stressed” than others?</div>
+    <div class="headrule"></div></div>
+    <div class="body">
+      <div style="display:flex;align-items:stretch;gap:14px;margin-top:6px">
+        <div class="card" style="flex:1;border-top:5px solid var(--coral)"><h3 style="font-size:16px"><span class="icon coral">→</span>Stressors</h3><p style="font-size:14px">Hindrance &amp; challenge, in both work &amp; nonwork domains, get appraised…</p></div>
+        <div style="display:flex;align-items:center;color:var(--tb-lt);font-size:26px;font-weight:800">➜</div>
+        <div class="card center" style="flex:.7;background:var(--tb-dkr);color:#fff;display:flex;flex-direction:column;justify-content:center;border:none"><div style="font-size:22px;font-weight:800">STRESS</div><div style="font-size:12px;color:#B7D4DA;margin-top:4px">primary + secondary appraisal</div></div>
+        <div style="display:flex;align-items:center;color:var(--tb-lt);font-size:26px;font-weight:800">➜</div>
+        <div class="card" style="flex:1;border-top:5px solid var(--tb)"><h3 style="font-size:16px"><span class="icon">↯</span>Strains</h3><p style="font-size:14px">…producing physiological, psychological &amp; behavioral strains.</p></div>
+      </div>
+      <div class="grid3" style="gap:14px;margin-top:16px">
+        <div class="card center" style="padding:14px"><div class="pillbadge" style="background:var(--tb-pale);color:var(--tb-dk)">MODERATOR</div><h3 style="justify-content:center;margin-top:8px;font-size:16px">Type A Pattern</h3></div>
+        <div class="card center" style="padding:14px"><div class="pillbadge" style="background:var(--tb-pale);color:var(--tb-dk)">MODERATOR</div><h3 style="justify-content:center;margin-top:8px;font-size:16px">Recovery</h3></div>
+        <div class="card center" style="padding:14px"><div class="pillbadge" style="background:var(--tb-pale);color:var(--tb-dk)">MODERATOR</div><h3 style="justify-content:center;margin-top:8px;font-size:16px">Social Support</h3></div>
+      </div>
+      <div class="callout" style="margin-top:16px"><div>These three factors explain why some people <b>shoulder stress for weeks</b> while others reach “the end of their rope” over minor demands.</div></div>
+    </div>
+    <div class="foot"><span><b>IS 340</b> · Chapter 5 — Stress</span><span>Figure 5-3 · p. 138</span></div>
+  </div>
+</section>
+
+<!-- ===== SLIDE 41 · DIVIDER 5.5 ===== -->
+<section class="slide">
+  <div class="divider"><div class="mesh"></div>
+    <div class="divider-in">
+      <div class="num">5.5</div>
+      <div class="lbl">Learning Goal Five</div>
+      <h2>How does stress affect job performance and organizational commitment?</h2>
+      <p>The type of stressor flips the story — hindrance stressors hurt, challenge stressors help.</p>
+      <div class="qrow"><span class="qchip">Job performance</span><span class="qchip">Organizational commitment</span><span class="qchip">Presenteeism</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== SLIDE 42 · HINDRANCE EFFECTS ===== -->
+<section class="slide">
+  <div class="pad">
+    <div><span class="eyebrow"><span class="dot"></span>Figure 5-4<span class="rule"></span></span>
+    <div class="h-title sm">Hindrance stressors: harmful on both outcomes</div>
+    <div class="headrule"></div></div>
+    <div class="body">
+      <div class="grid2" style="gap:20px">
+        <div class="card" style="border-left:5px solid var(--coral)"><h3><span class="icon coral">↓</span>Job performance</h3><p style="font-size:15px"><b>Weak negative</b> (≈ −.10). Hindrances drain the physical, cognitive, and emotional energy people bring to their duties — and may trigger counterproductive behavior.</p></div>
+        <div class="card" style="border-left:5px solid var(--coral)"><h3><span class="icon coral">↓↓</span>Organizational commitment</h3><p style="font-size:15px"><b>Strong negative</b> (≈ −.50). Hindrances cause dissatisfaction; people who feel constantly sick and exhausted want to leave. Affective &amp; normative commitment fall hardest.</p></div>
+      </div>
+      <div class="callout" style="margin-top:20px"><div>Legend for the tool ahead: a <b>weak</b> correlation ≈ .10, <b>moderate</b> ≈ .30, and <b>strong</b> ≈ .50 in magnitude.</div></div>
+    </div>
+    <div class="foot"><span><b>IS 340</b> · Chapter 5 — Stress</span><span>LePine, Podsakoff &amp; LePine · p. 139</span></div>
+  </div>
+</section>
+
+<!-- ===== SLIDE 43 · CHALLENGE EFFECTS ===== -->
+<section class="slide">
+  <div class="pad">
+    <div><span class="eyebrow"><span class="dot"></span>Figure 5-5<span class="rule"></span></span>
+    <div class="h-title sm">Challenge stressors: beneficial on balance</div>
+    <div class="headrule"></div></div>
+    <div class="body">
+      <div class="grid2" style="gap:20px">
+        <div class="card" style="border-left:5px solid var(--gold)"><h3><span class="icon gold">↑</span>Job performance</h3><p style="font-size:15px"><b>Weak positive</b> (≈ +.10). Challenges still cause strain, but they trigger positive emotions and problem-focused coping typical of highly engaged employees.</p></div>
+        <div class="card" style="border-left:5px solid var(--gold)"><h3><span class="icon gold">↑↑</span>Organizational commitment</h3><p style="font-size:15px"><b>Moderate positive</b> (≈ +.30). The net benefit of engagement outweighs the added strain — raising affective &amp; normative commitment.</p></div>
+      </div>
+      <div class="callout" style="margin-top:20px"><div><span class="b">The long-term catch — presenteeism:</span> because challenge-loaded employees are satisfied and engaged, they <b>come to work sick</b>, spreading illness and spiraling into impaired health.</div></div>
+    </div>
+    <div class="foot"><span><b>IS 340</b> · Chapter 5 — Stress</span><span>Podsakoff, LePine &amp; LePine · p. 140</span></div>
+  </div>
+</section>
+
+<!-- ===== SLIDE 44 · TOOL: CORRELATION VISUALIZER ===== -->
+<section class="slide" data-tool="corr">
+  <div class="pad">
+    <div><span class="eyebrow"><span class="dot"></span>Interactive · Figures 5-4 &amp; 5-5<span class="rule"></span></span>
+    <div class="h-title sm">Stressor → Outcome Visualizer</div></div>
+    <div class="tool">
+      <div class="tool-bar"><span class="tb-badge">Try it</span><span class="tb-title">Switch stressor type · slide the level · watch outcomes move</span>
+        <span class="tb-hint"><span class="cur">±</span>Direction &amp; strength update live</span></div>
+      <div class="tool-body" id="corrTool"></div>
+    </div>
+    <div class="foot"><span><b>IS 340</b> · Chapter 5 — Stress</span><span>Meta-analytic correlations · pp. 139–141</span></div>
+  </div>
+</section>
+
+<!-- ===== SLIDE 45 · PRESENTEEISM ===== -->
+<section class="slide">
+  <div class="pad">
+    <div><span class="eyebrow"><span class="dot"></span>The hidden cost<span class="rule"></span></span>
+    <div class="h-title sm">Presenteeism can cost more than absenteeism</div>
+    <div class="headrule"></div></div>
+    <div class="body">
+      <div class="def" style="margin-bottom:16px"><div class="term">Presenteeism</div><div class="exp">Coming to work despite being ill — common among engaged, challenge-loaded employees — which can <b>prolong and spread</b> illness and spiral into impaired performance.</div></div>
+      <div class="statrow">
+        <div class="stat"><div class="big coral">↓↓</div><div class="cap">Productivity lost to <b>presenteeism</b> can exceed the loss from <b>absenteeism</b></div></div>
+        <div class="stat"><div class="big gold">Engaged</div><div class="cap">The very commitment that helps performance is what pulls sick workers in</div></div>
+        <div class="stat"><div class="big">Spiral</div><div class="cap">Prolonged illness → spread of illness → downward spiral of health &amp; output</div></div>
+      </div>
+      <div class="callout" style="margin-top:22px"><div>The paradox of challenge stressors: they lift performance and commitment in the short run, yet the strain they create can quietly undermine health over the <b>long</b> run.</div></div>
+    </div>
+    <div class="foot"><span><b>IS 340</b> · Chapter 5 — Stress</span><span>Presenteeism · p. 141</span></div>
+  </div>
+</section>
+
+<!-- ===== SLIDE 46 · DIVIDER 5.6 ===== -->
+<section class="slide">
+  <div class="divider"><div class="mesh"></div>
+    <div class="divider-in">
+      <div class="num">5.6</div>
+      <div class="lbl">Learning Goal Six</div>
+      <h2>What steps can organizations take to manage employee stress?</h2>
+      <p>Assess it, then reduce the stressors, provide resources, or reduce the strains.</p>
+      <div class="qrow"><span class="qchip">Stress audit</span><span class="qchip">Reduce stressors</span><span class="qchip">Provide resources</span><span class="qchip">Reduce strains</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== SLIDE 47 · COSTS ===== -->
+<section class="slide">
+  <div class="pad">
+    <div><span class="eyebrow"><span class="dot"></span>The Business Case<span class="rule"></span></span>
+    <div class="h-title sm">Stress is expensive</div>
+    <div class="headrule"></div></div>
+    <div class="body">
+      <div class="statrow">
+        <div class="stat"><div class="big coral">60–90%</div><div class="cap">of all doctor visits can be attributed to <b>stress-related causes</b></div></div>
+        <div class="stat"><div class="big coral">+50%</div><div class="cap">higher health-care cost for high-stress employees vs. low-stress</div></div>
+        <div class="stat"><div class="big coral">+800%</div><div class="cap">higher worker's-comp claim frequency at one high-stress job site</div></div>
+      </div>
+      <div class="callout" style="margin-top:22px"><div><span class="b">The upside:</span> the tight link between stress and health-care cost means there are <b>huge dividends</b> for organizations that learn to manage employee stress. Google even offers massage, meditation, and napping pods with fold-down egg-shaped caps.</div></div>
+    </div>
+    <div class="foot"><span><b>IS 340</b> · Chapter 5 — Stress</span><span>Application: Stress Management · p. 141</span></div>
+  </div>
+</section>
+
+<!-- ===== SLIDE 48 · STRESS AUDIT ===== -->
+<section class="slide">
+  <div class="pad">
+    <div><span class="eyebrow"><span class="dot"></span>Step One<span class="rule"></span></span>
+    <div class="h-title sm">Assessment: run a stress audit</div>
+    <div class="headrule"></div></div>
+    <div class="body">
+      <div class="h-sub" style="margin-top:0">Before acting, managers estimate whether stress is a problem by asking three categories of questions about the jobs in their organization.</div>
+      <div class="grid3" style="gap:16px;margin-top:18px">
+        <div class="card"><h3><span class="icon">1</span>Change</h3><p>Is the organization going through changes — a <b>merger</b>, or a shift to team-based work — that raise uncertainty about job security or how contributions are rewarded?</p></div>
+        <div class="card"><h3><span class="icon">2</span>The work itself</h3><p>What is the <b>level and type of stressors</b> employees face day to day?</p></div>
+        <div class="card"><h3><span class="icon">3</span>Relationships</h3><p>What is the quality of relationships among employees and with the organization — and do <b>organizational politics</b> drive administrative decisions?</p></div>
+      </div>
+      <div class="callout" style="margin-top:20px"><div>Only after a stress audit reveals a problem does it make sense to choose among the interventions ahead: managing stressors vs. reducing strains.</div></div>
+    </div>
+    <div class="foot"><span><b>IS 340</b> · Chapter 5 — Stress</span><span>Assessment · pp. 141–142</span></div>
+  </div>
+</section>
+
+<!-- ===== SLIDE 49 · REDUCING STRESSORS ===== -->
+<section class="slide">
+  <div class="pad">
+    <div><span class="eyebrow"><span class="dot"></span>Approach A<span class="rule"></span></span>
+    <div class="h-title sm">Reducing stressors at the source</div>
+    <div class="headrule"></div></div>
+    <div class="body">
+      <div class="grid3">
+        <div class="card"><h3><span class="icon">✂</span>Limit demands</h3><p>Xonex Relocation bans working through lunch and structures workflow so people don't leave with unfinished work hanging over them.</p></div>
+        <div class="card"><h3><span class="icon">⇆</span>Job sharing</h3><p>Two people share one job as a single unit (used by 19% of orgs). Two Fleet Bank women shared a VP role — one desk, one goal set — for six years.</p></div>
+        <div class="card"><h3><span class="icon">🏝</span>Sabbaticals</h3><p>Time off for an alternative activity (≈11% paid, ~⅓ unpaid). American Express and PwC offer up to six months.</p></div>
+      </div>
+      <div class="callout" style="margin-top:20px"><div><span class="b">The limitation:</span> sabbaticals and vacations give a clean break, but because the <b>stressors in the job never change</b>, the employee likely returns to the same level of stress.</div></div>
+    </div>
+    <div class="foot"><span><b>IS 340</b> · Chapter 5 — Stress</span><span>Reducing stressors · pp. 142–143</span></div>
+  </div>
+</section>
+
+<!-- ===== SLIDE 50 · PROVIDING RESOURCES ===== -->
+<section class="slide">
+  <div class="pad">
+    <div><span class="eyebrow"><span class="dot"></span>Approach B · Table 5-4<span class="rule"></span></span>
+    <div class="h-title sm">Providing resources &amp; supportive practices</div>
+    <div class="headrule"></div></div>
+    <div class="body">
+      <div class="grid2" style="gap:20px">
+        <div class="card"><h3><span class="icon">🎓</span>Training interventions</h3><p style="font-size:15px">More competencies and skills let employees handle more demands before appraising them as taxing — and build a sense of <b>control</b> that fosters problem-focused coping.</p></div>
+        <div class="card"><h3><span class="icon">🗓</span>Supportive practices</h3><p style="font-size:15px">Help employees balance roles. From a survey of ~400 organizations:</p>
+          <div style="margin-top:10px;display:flex;flex-direction:column;gap:7px">
+            <div style="display:flex;align-items:center;gap:10px"><span style="width:150px;font-size:13.5px;color:var(--ink)">Flextime</span><div class="meter" style="flex:1;height:16px"><div class="fill" style="width:56%"></div></div><span class="small" style="width:38px">56%</span></div>
+            <div style="display:flex;align-items:center;gap:10px"><span style="width:150px;font-size:13.5px;color:var(--ink)">Part-time telecommuting</span><div class="meter" style="flex:1;height:16px"><div class="fill" style="width:43%"></div></div><span class="small" style="width:38px">43%</span></div>
+            <div style="display:flex;align-items:center;gap:10px"><span style="width:150px;font-size:13.5px;color:var(--ink)">Compressed workweek</span><div class="meter" style="flex:1;height:16px"><div class="fill" style="width:41%"></div></div><span class="small" style="width:38px">41%</span></div>
+          </div>
+        </div>
+      </div>
+      <div class="callout" style="margin-top:18px"><div>Reducing stressors helps most with <b>hindrance</b> stressors. Providing resources is a broader supplement — but managers who read these practices as “low commitment” can leave them <b>underutilized</b>. (Marissa Mayer even banned telecommuting at Yahoo.)</div></div>
+    </div>
+    <div class="foot"><span><b>IS 340</b> · Chapter 5 — Stress</span><span>Providing resources · pp. 143–144</span></div>
+  </div>
+</section>
+
+<!-- ===== SLIDE 51 · REDUCING STRAINS ===== -->
+<section class="slide">
+  <div class="pad">
+    <div><span class="eyebrow"><span class="dot"></span>Approach C<span class="rule"></span></span>
+    <div class="h-title sm">Reducing strains directly</div>
+    <div class="headrule"></div></div>
+    <div class="body">
+      <div class="grid3">
+        <div class="card"><h3><span class="icon">🧘</span>Relaxation techniques</h3><p>Progressive muscle relaxation, meditation, deep breathing. Herbert Benson: repeat a word or phrase for 10–20 minutes, once or twice a day.</p></div>
+        <div class="card"><h3><span class="icon">💓</span>Biofeedback</h3><p>A heart monitor and software teach people to shift heart rhythms from an anxious to a calmer pattern. BlueCross BlueShield of Tennessee trained ~⅕ of its 4,500 employees.</p></div>
+        <div class="card"><h3><span class="icon">🗣</span>Cognitive-behavioral</h3><p>“Self-talk” replaces doom with rational optimism — “this demand isn't so tough.” Freescale trains 6,000 employees to be <b>resilient</b>.</p></div>
+      </div>
+      <div class="callout" style="margin-top:20px"><div>The three-part playbook: <b>reduce or eliminate stressors</b>, <b>provide resources</b> to cope, or <b>reduce the strains</b> directly. Build your own plan next.</div></div>
+    </div>
+    <div class="foot"><span><b>IS 340</b> · Chapter 5 — Stress</span><span>Reducing strains · pp. 144–146</span></div>
+  </div>
+</section>
+
+<!-- ===== SLIDE 52 · TOOL: MANAGEMENT BUILDER ===== -->
+<section class="slide" data-tool="mgmt">
+  <div class="pad">
+    <div><span class="eyebrow"><span class="dot"></span>Interactive · Section 5.6<span class="rule"></span></span>
+    <div class="h-title sm">Stress-Management Plan Builder</div></div>
+    <div class="tool">
+      <div class="tool-bar"><span class="tb-badge">Try it</span><span class="tb-title">You're the manager — assemble a stress-management program</span>
+        <span class="tb-hint"><span class="cur">＋</span>See what each choice targets</span></div>
+      <div class="tool-body" id="mgmtTool"></div>
+    </div>
+    <div class="foot"><span><b>IS 340</b> · Chapter 5 — Stress</span><span>Reduce stressors · Provide resources · Reduce strains</span></div>
+  </div>
+</section>
+
+<!-- ===== SLIDE 53 · BOOKSTORE + WELLNESS ===== -->
+<section class="slide">
+  <div class="pad">
+    <div><span class="eyebrow"><span class="dot"></span>OB at the Bookstore · Wellness<span class="rule"></span></span>
+    <div class="h-title sm">Building resilience &amp; wellness that pays off</div>
+    <div class="headrule"></div></div>
+    <div class="body">
+      <div class="grid2" style="gap:20px">
+        <div class="card" style="border-left:5px solid var(--gold)"><h3><span class="icon gold">📖</span>Resilient — Rick Hanson</h3><p style="font-size:15px">Meet three basic needs — <b>safety, satisfaction, connection</b> — and you thrive under demands that would otherwise cause strain. Develop 12 strengths like mindfulness and self-compassion.</p></div>
+        <div class="card" style="border-left:5px solid var(--tb)"><h3><span class="icon">🏃</span>Health &amp; wellness programs</h3><p style="font-size:15px">Employee assistance programs (~¾ of orgs) and wellness benefits (60%+): screening, smoking cessation, fitness, nutrition. Humana lends free bikes; Grant Thornton funds marathons.</p></div>
+      </div>
+      <div class="callout" style="margin-top:18px"><div><span class="b">Does it pay?</span> L.L.Bean's wellness program for ~5,000 employees delivered a <b>positive ROI after year one</b>, cutting health-care costs by nearly <b>$400 per employee</b>.</div></div>
+    </div>
+    <div class="foot"><span><b>IS 340</b> · Chapter 5 — Stress</span><span>OB at the Bookstore · pp. 146–147</span></div>
+  </div>
+</section>
+
+<!-- ===== SLIDE 54 · TAKEAWAYS ===== -->
+<section class="slide">
+  <div class="pad">
+    <div><span class="eyebrow"><span class="dot"></span>Chapter Summary<span class="rule"></span></span>
+    <div class="h-title sm">Six takeaways</div>
+    <div class="headrule"></div></div>
+    <div class="body">
+      <div class="grid2" style="gap:14px 20px">
+        <div class="def" style="padding:13px 18px"><div class="term" style="min-width:44px">5.1</div><div class="exp" style="font-size:14px">Stress is a psychological response when a demand at stake would tax or exceed one's resources. <b>Stressors</b> cause it; <b>strains</b> are its consequences.</div></div>
+        <div class="def gold" style="padding:13px 18px"><div class="term" style="min-width:44px">5.2</div><div class="exp" style="font-size:14px">Stressors are <b>challenge</b> (growth) or <b>hindrance</b> (hurdles), found in both work and nonwork domains.</div></div>
+        <div class="def" style="padding:13px 18px"><div class="term" style="min-width:44px">5.3</div><div class="exp" style="font-size:14px">Coping addresses one of two goals: managing the <b>demand</b> or easing the <b>emotional discomfort</b>.</div></div>
+        <div class="def gold" style="padding:13px 18px"><div class="term" style="min-width:44px">5.4</div><div class="exp" style="font-size:14px"><b>Type A</b> people face more stressors, appraise more demands as stressful, and suffer more strains.</div></div>
+        <div class="def coral" style="padding:13px 18px"><div class="term" style="min-width:44px">5.5</div><div class="exp" style="font-size:14px">Hindrance stressors: weak−/strong− on performance/commitment. Challenge stressors: weak+/moderate+.</div></div>
+        <div class="def" style="padding:13px 18px"><div class="term" style="min-width:44px">5.6</div><div class="exp" style="font-size:14px">Organizations <b>reduce stressors</b>, <b>provide resources</b> to cope, or <b>reduce strains</b> — because stress is costly.</div></div>
+      </div>
+    </div>
+    <div class="foot"><span><b>IS 340</b> · Chapter 5 — Stress</span><span>Takeaways · p. 147</span></div>
+  </div>
+</section>
+
+<!-- ===== SLIDE 55 · KEY TERMS ===== -->
+<section class="slide">
+  <div class="pad">
+    <div><span class="eyebrow"><span class="dot"></span>Key Terms<span class="rule"></span></span>
+    <div class="h-title sm">The vocabulary of Chapter 5</div>
+    <div class="headrule"></div></div>
+    <div class="body">
+      <div id="termsGrid" style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:4px"></div>
+    </div>
+    <div class="foot"><span><b>IS 340</b> · Chapter 5 — Stress</span><span>Glossary terms · p. 148</span></div>
+  </div>
+</section>
+
+<!-- ===== SLIDE 56 · CLOSING ===== -->
+<section class="slide">
+  <div class="cover">
+    <div class="mesh"></div><div class="grid"></div>
+    <div class="cover-in">
+      <span class="badge"><span class="sq"></span>End of Chapter 5</span>
+      <h1>Manage the<br><span>demand</span>, not just the feeling.</h1>
+      <div class="lead">From appraisal to strain to intervention — you've now got the full transactional model of stress, plus ten tools to explore it hands-on.</div>
+      <div class="metarow">
+        <div class="metachip"><div class="k">Covered</div><div class="v">5.1 – 5.6, in full</div></div>
+        <div class="metachip"><div class="k">Interactive apps</div><div class="v">10 · all runnable</div></div>
+        <div class="metachip"><div class="k">Next</div><div class="v">Discussion &amp; case</div></div>
+      </div>
+      <div class="hint" style="position:static;margin-top:34px">Jump to any tool from <b>Contents</b> below · press <kbd>Home</kbd> to restart</div>
+    </div>
+    <div class="book">
+      <div class="spark"></div>
+      <div class="ch">✓</div>
+      <div>
+        <div class="bt">Chapter 5 complete</div>
+        <div class="bs">Stress · Stressors · Strains<br>Coping · Type A · Management</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+</div></div><!-- /stage /viewport -->
+
+<!-- ===== NAV ===== -->
+<div id="nav">
+  <button id="prev" title="Previous (←)">‹</button>
+  <span id="counter">1 / 56</span>
+  <button id="next" title="Next (→)">›</button>
+  <button class="tocbtn" id="tocBtn" title="Jump to a slide">▦ Contents</button>
+</div>
+
+<!-- ===== TOC ===== -->
+<div id="toc">
+  <button class="close" id="tocClose">×</button>
+  <h4>Contents — jump anywhere</h4>
+  <div class="grid" id="tocGrid"></div>
+</div>
+
+<script>
+(function(){
+  "use strict";
+  /* ---------- fit / scale ---------- */
+  var stage = document.getElementById('stage');
+  function fit(){
+    var s = Math.min(window.innerWidth/1280, window.innerHeight/720);
+    stage.style.transform = 'translate(-50%,-50%) scale(' + s + ')';
+  }
+  window.addEventListener('resize', fit); fit();
+
+  /* ---------- navigation ---------- */
+  var slides  = Array.prototype.slice.call(document.querySelectorAll('.slide'));
+  var counter = document.getElementById('counter');
+  var prog    = document.getElementById('prog');
+  var toc     = document.getElementById('toc');
+  var idx = 0;
+  var inits = {};
+  window.__inits = inits;
+
+  function show(i){
+    idx = Math.max(0, Math.min(slides.length-1, i));
+    for(var k=0;k<slides.length;k++) slides[k].classList.toggle('active', k===idx);
+    counter.textContent = (idx+1) + ' / ' + slides.length;
+    prog.style.width = ((idx+1)/slides.length*100) + '%';
+    var t = slides[idx].getAttribute('data-tool');
+    if(t && inits[t] && !slides[idx].__inited){
+      try { inits[t](slides[idx]); } catch(err){ console.error('tool init error:', t, err); }
+      slides[idx].__inited = true;
+    }
+  }
+
+  document.getElementById('prev').onclick = function(){ show(idx-1); };
+  document.getElementById('next').onclick = function(){ show(idx+1); };
+  document.getElementById('tocBtn').onclick  = function(){ toc.classList.add('open'); };
+  document.getElementById('tocClose').onclick = function(){ toc.classList.remove('open'); };
+  toc.addEventListener('click', function(e){ if(e.target===toc) toc.classList.remove('open'); });
+
+  document.addEventListener('keydown', function(e){
+    if(toc.classList.contains('open')){ if(e.key==='Escape') toc.classList.remove('open'); return; }
+    var tag=(e.target.tagName||'').toLowerCase();
+    if(tag==='input'||tag==='textarea'||tag==='select') return;
+    if(e.key==='ArrowRight'||e.key==='PageDown'){ show(idx+1); e.preventDefault(); }
+    else if(e.key==='ArrowLeft'||e.key==='PageUp'){ show(idx-1); e.preventDefault(); }
+    else if(e.key===' '){ show(idx+1); e.preventDefault(); }
+    else if(e.key==='Home'){ show(0); e.preventDefault(); }
+    else if(e.key==='End'){ show(slides.length-1); e.preventDefault(); }
+  });
+
+  /* ---------- build Table of Contents ---------- */
+  var tocGrid = document.getElementById('tocGrid');
+  slides.forEach(function(s,k){
+    var el  = s.querySelector('.h-title, .divider h2, .cover h1');
+    var txt = el ? el.textContent.trim().replace(/\s+/g,' ') : ('Slide '+(k+1));
+    if(txt.length>44) txt = txt.slice(0,42)+'…';
+    var isTool = !!s.getAttribute('data-tool');
+    var d = document.createElement('div');
+    d.className = 'tItem' + (isTool?' tool':'');
+    d.innerHTML = '<b>'+(k+1)+'</b>'+txt+(isTool?' &nbsp;🛠':'');
+    d.onclick = function(){ show(k); toc.classList.remove('open'); };
+    tocGrid.appendChild(d);
+  });
+
+  /* ---------- key terms ---------- */
+  var terms = ["Stress","Stressors","Strains","Transactional theory of stress","Primary appraisal",
+    "Benign job demands","Hindrance stressors","Challenge stressors","Role conflict","Role ambiguity",
+    "Role overload","Daily hassles","Time pressure","Work complexity","Work responsibility",
+    "Work–family conflict","Negative life events","Financial uncertainty","Family time demands","Personal development",
+    "Positive life events","Secondary appraisal","Coping","Behavioral coping","Cognitive coping",
+    "Problem-focused coping","Emotion-focused coping","Burnout","Type A Behavior Pattern","Recovery",
+    "Social support","Instrumental support","Emotional support"];
+  var tg = document.getElementById('termsGrid');
+  if(tg){
+    terms.forEach(function(t,i){
+      var d=document.createElement('div');
+      d.style.cssText='background:#fff;border:1px solid var(--line);border-radius:8px;padding:8px 10px;font-size:12px;font-weight:600;color:var(--tb-dkr);display:flex;align-items:center;gap:8px;line-height:1.2';
+      d.innerHTML='<span style="color:var(--tb-lt);font-weight:800;font-size:10.5px">'+String(i+1).padStart(2,'0')+'</span>'+t;
+      tg.appendChild(d);
+    });
+  }
+
+  /* ---------- shared helpers ---------- */
+  function shuffle(a){ for(var i=a.length-1;i>0;i--){ var j=Math.floor(Math.random()*(i+1)); var t=a[i];a[i]=a[j];a[j]=t; } return a; }
+  window.__util = { shuffle: shuffle };
+
+  /* expose show for tools that may need it */
+  window.__show = show;
+
+  /* initialize first slide */
+  show(0);
+})();
+</script>
+
+<script>
+(function(){
+  "use strict";
+  var inits = window.__inits;
+  var shuffle = window.__util.shuffle;
+
+  /* ============================================================
+     TOOL 1 · JOB STRESS SPECTRUM EXPLORER
+  ============================================================ */
+  inits.jobs = function(slide){
+    var host = slide.querySelector('#jobsTool');
+    var least = [["Tenured University Professor",5.03],["Audiologist",6.33],["Medical Records Technician",7.48],["Jeweler",8.10],["Librarian",10.61],["Software Engineer",12.13],["Computer Service Technician",12.64],["Occupational Therapist",13.14],["Chiropractor",13.55],["Actuary",14.09],["Multimedia Artist",14.40],["Hair Stylist",14.59],["Meteorologist",14.65],["Loan Officer",14.73],["Biologist",15.10],["Optician",15.57],["Veterinarian",15.83],["Chemist",17.00],["Sustainability Manager",18.50],["Accountant",19.85]];
+    var most  = [["Elementary School Teacher",27.37],["Management Consultant",28.24],["Air Traffic Controller",28.58],["Surgeon",28.90],["Construction Foreman",30.92],["Lumberjack",32.00],["Attorney",36.40],["Sales Representative",36.95],["Real Estate Agent",38.57],["Social Media Manager",38.60],["Stockbroker",39.97],["Advertising Account Executive",43.24],["Taxi Driver",46.18],["Senior Corporate Executive",47.55],["Event Coordinator",49.73],["Police Officer",50.81],["Airline Pilot",59.12],["Newspaper Reporter",69.67],["Firefighter",71.64],["Enlisted Military Personnel",74.83]];
+    host.innerHTML =
+      '<div style="display:flex;gap:22px;height:100%">'+
+        '<div style="flex:1.15;display:flex;flex-direction:column;min-height:0">'+
+          '<div style="display:flex;gap:8px;margin-bottom:10px"><button class="btn sm primary" id="jbL">Least stressful</button><button class="btn sm ghost" id="jbM">Most stressful</button></div>'+
+          '<div class="scrolly" id="jbList" style="flex:1;display:flex;flex-wrap:wrap;gap:7px;align-content:flex-start;overflow-y:auto;padding-right:6px"></div>'+
+        '</div>'+
+        '<div style="flex:1;display:flex;flex-direction:column;justify-content:center;gap:18px;border-left:1px solid var(--line);padding-left:22px">'+
+          '<div><div class="small muted" style="letter-spacing:.12em;text-transform:uppercase;font-weight:800">Now placing</div><div id="jbName" style="font-size:25px;font-weight:800;color:var(--ink);line-height:1.1;margin-top:2px">Software Engineer</div></div>'+
+          '<div><div style="display:flex;justify-content:space-between;font-size:11.5px;color:#8AA6AD;font-weight:700"><span>CALM · 5</span><span>EXTREME · 75</span></div>'+
+            '<div style="position:relative;height:34px;margin-top:6px"><div class="meter" style="height:34px;border-radius:17px"><div class="fill" id="jbFill" style="width:10%;background:linear-gradient(90deg,var(--tb),var(--gold),var(--coral))"></div></div>'+
+            '<div id="jbMark" style="position:absolute;top:-7px;height:48px;width:4px;border-radius:2px;background:var(--ink);left:10%;transition:left .5s cubic-bezier(.2,.8,.2,1)"></div></div></div>'+
+          '<div style="display:flex;align-items:baseline;gap:14px"><div id="jbScore" style="font-size:50px;font-weight:800;color:var(--tb);line-height:1">12.1</div><div id="jbBand" class="pillbadge" style="background:var(--tb-pale);color:var(--tb-dk)">Low stress</div></div>'+
+          '<div id="jbNote" class="small" style="color:var(--ink-soft);line-height:1.5">The stress score sums 10 categories — deadlines, hazards, life-at-risk and more. Tap any job at left to place it.</div>'+
+        '</div>'+
+      '</div>';
+    var listEl=host.querySelector('#jbList'), current='least';
+    function band(v){ if(v<15)return['Low stress','var(--tb)','var(--tb-pale)','var(--tb-dk)']; if(v<30)return['Moderate stress','var(--gold-dk)','#F7EAD0','var(--gold-dk)']; if(v<50)return['High stress','var(--coral-dk)','#F7E4DF','var(--coral-dk)']; return['Extreme stress','var(--coral-dk)','#F7E4DF','var(--coral-dk)']; }
+    function pick(name,v){
+      var pct=Math.max(1,Math.min(99,(v-5)/70*100));
+      host.querySelector('#jbName').textContent=name;
+      host.querySelector('#jbFill').style.width=pct+'%';
+      host.querySelector('#jbMark').style.left=pct+'%';
+      var sc=host.querySelector('#jbScore'); sc.textContent=v.toFixed(2);
+      var b=band(v); sc.style.color=b[1];
+      var pill=host.querySelector('#jbBand'); pill.textContent=b[0]; pill.style.background=b[2]; pill.style.color=b[3];
+      var rankTxt = v<20 ? 'One of the calmest careers — routine demands rarely exceed a trained worker\u2019s resources.' :
+                    v<30 ? 'Moderately demanding — real deadlines and public contact, but manageable.' :
+                    v<50 ? 'High stress — heavy responsibility, hazards, or intense pace.' :
+                    'Among the most stressful jobs measured — life-at-risk, extreme pressure, and hazards stack up.';
+      host.querySelector('#jbNote').textContent=rankTxt;
+      Array.prototype.forEach.call(listEl.children,function(c){ c.classList.toggle('on', c.dataset.n===name); });
+    }
+    function renderList(){
+      var data=current==='least'?least:most;
+      listEl.innerHTML='';
+      data.forEach(function(j){
+        var c=document.createElement('div'); c.className='chipbtn'; c.dataset.n=j[0];
+        c.innerHTML=j[0]+' <b style="opacity:.6">'+j[1].toFixed(1)+'</b>';
+        c.onclick=function(){ pick(j[0],j[1]); };
+        listEl.appendChild(c);
+      });
+    }
+    host.querySelector('#jbL').onclick=function(){ current='least'; this.className='btn sm primary'; host.querySelector('#jbM').className='btn sm ghost'; renderList(); };
+    host.querySelector('#jbM').onclick=function(){ current='most'; this.className='btn sm primary'; host.querySelector('#jbL').className='btn sm ghost'; renderList(); };
+    renderList(); pick("Software Engineer",12.13);
+  };
+
+  /* ============================================================
+     TOOL 2 · APPRAISAL SIMULATOR
+  ============================================================ */
+  inits.appraise = function(slide){
+    var host = slide.querySelector('#appraiseTool');
+    var scen=[
+      {t:"It\u2019s finals week \u2014 three exams, a term paper, and you\u2019re job-hunting all at once.",type:'hindrance',
+       note:"Overload usually reads as a hindrance. A study plan or asking for an extension (problem-focused) beats escaping until 3 a.m."},
+      {t:"Your manager hands you a high-visibility project with a tight deadline and full ownership.",type:'challenge',
+       note:"Responsibility plus time pressure are classic challenge stressors \u2014 demanding, but tied to growth and reward."},
+      {t:"A costly car repair lands the same month rent is due, and your hours were just cut.",type:'hindrance',
+       note:"Financial uncertainty is a nonwork hindrance. Low sense of control often nudges people toward emotion-focused coping."},
+      {t:"You\u2019re offered a stretch assignment abroad that will accelerate your career.",type:'challenge',
+       note:"Work complexity as a developmental stretch \u2014 exhausting, yet the growth is worth the discomfort."}
+    ];
+    var si=0,step=0,pick={};
+    function dots(active){
+      var labels=['Primary','Classify','Secondary']; var h='<div style="display:flex;gap:8px;margin-bottom:14px">';
+      for(var i=0;i<3;i++){ h+='<div style="flex:1;text-align:center;font-size:11px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;padding:6px;border-radius:8px;background:'+(i<=active?'var(--tb)':'var(--tb-mist)')+';color:'+(i<=active?'#fff':'#8AA6AD')+'">'+labels[i]+'</div>'; }
+      return h+'</div>';
+    }
+    function card(inner){ return '<div style="max-width:840px;margin:0 auto">'+inner+'</div>'; }
+    function scenBox(){ return '<div style="background:var(--tb-mist);border:1px solid var(--tb-pale);border-radius:12px;padding:16px 20px;margin-bottom:16px"><div class="small muted" style="font-weight:800;letter-spacing:.1em;text-transform:uppercase">Scenario '+(si+1)+' of '+scen.length+'</div><div style="font-size:18px;color:var(--ink);font-weight:600;margin-top:4px;line-height:1.4">'+scen[si].t+'</div></div>'; }
+    function btn(txt,cls,fn){ var b=document.createElement('button'); b.className='btn '+cls; b.style.cssText='flex:1;text-align:left;padding:14px 16px;font-size:14.5px;line-height:1.35'; b.innerHTML=txt; b.onclick=fn; return b; }
+    function draw(){
+      host.innerHTML='';
+      var wrap=document.createElement('div'); wrap.innerHTML=dots(step);
+      var body=document.createElement('div');
+      if(step===0){
+        body.innerHTML=card(scenBox()+'<div style="font-size:19px;font-weight:800;color:var(--tb-dkr);margin-bottom:12px">Primary appraisal &mdash; <span style="color:var(--ink)">Is this stressful?</span></div>');
+        var row=document.createElement('div'); row.style.cssText='display:flex;gap:12px;max-width:840px;margin:0 auto';
+        row.appendChild(btn('<b>Not stressful</b><br><span style="opacity:.75;font-size:13px">A benign demand \u2014 within my resources</span>','ghost',function(){ benign(); }));
+        row.appendChild(btn('<b>Yes, this is stressful</b><br><span style="opacity:.75;font-size:13px">It taxes or exceeds my resources</span>','primary',function(){ step=1; draw(); }));
+        body.appendChild(row);
+      } else if(step===1){
+        body.innerHTML=card(scenBox()+'<div style="font-size:19px;font-weight:800;color:var(--tb-dkr);margin-bottom:12px">How do you read it?</div>');
+        var row=document.createElement('div'); row.style.cssText='display:flex;gap:12px;max-width:840px;margin:0 auto';
+        row.appendChild(btn('<b>A hurdle blocking my goals</b><br><span style="opacity:.8;font-size:13px">Hindrance \u2192 anxiety, anger</span>','ghost',function(){ pick.type='hindrance'; step=2; draw(); }));
+        row.appendChild(btn('<b>A chance to grow</b><br><span style="opacity:.8;font-size:13px">Challenge \u2192 pride, enthusiasm</span>','ghost',function(){ pick.type='challenge'; step=2; draw(); }));
+        body.appendChild(row);
+      } else if(step===2){
+        body.innerHTML=card(scenBox()+'<div style="font-size:19px;font-weight:800;color:var(--tb-dkr);margin-bottom:12px">Secondary appraisal &mdash; <span style="color:var(--ink)">How will you cope?</span></div>');
+        var row=document.createElement('div'); row.style.cssText='display:flex;gap:12px;max-width:840px;margin:0 auto';
+        row.appendChild(btn('<b>Tackle the demand</b><br><span style="opacity:.8;font-size:13px">Problem-focused \u2014 change the situation</span>','ghost',function(){ pick.cope='problem'; step=3; draw(); }));
+        row.appendChild(btn('<b>Manage my feelings</b><br><span style="opacity:.8;font-size:13px">Emotion-focused \u2014 ease the distress</span>','ghost',function(){ pick.cope='emotion'; step=3; draw(); }));
+        body.appendChild(row);
+      } else {
+        var match = pick.type===scen[si].type;
+        var typeTxt = pick.type==='challenge'?'a <b style="color:var(--gold-dk)">challenge stressor</b>':'a <b style="color:var(--coral-dk)">hindrance stressor</b>';
+        var copeTxt = pick.cope==='problem'?'problem-focused coping':'emotion-focused coping';
+        body.innerHTML=card(scenBox()+
+          '<div style="background:#fff;border:1px solid var(--line);border-left:5px solid '+(match?'var(--gold)':'var(--tb)')+';border-radius:12px;padding:18px 20px">'+
+            '<div style="font-size:16px;color:var(--ink);line-height:1.55">You appraised this as '+typeTxt+' and chose <b>'+copeTxt+'</b>.</div>'+
+            '<div style="margin-top:12px;font-size:14.5px;color:var(--ink-soft);line-height:1.55"><b style="color:var(--tb-dkr)">Insight:</b> '+scen[si].note+(match?'':' Either reading can be valid \u2014 the appraisal is yours to make, and it shapes which coping strategy fits.')+'</div>'+
+          '</div>'+
+          '<div style="display:flex;gap:10px;justify-content:center;margin-top:16px"><button class="btn ghost" id="apAgain">Redo this scenario</button><button class="btn primary" id="apNext">Next scenario \u2192</button></div>');
+        setTimeout(function(){
+          host.querySelector('#apAgain').onclick=function(){ step=0; pick={}; draw(); };
+          host.querySelector('#apNext').onclick=function(){ si=(si+1)%scen.length; step=0; pick={}; draw(); };
+        },0);
+      }
+      wrap.appendChild(body); host.appendChild(wrap);
+    }
+    function benign(){
+      host.innerHTML='';
+      var wrap=document.createElement('div'); wrap.innerHTML=dots(0);
+      wrap.innerHTML+=card(scenBox()+
+        '<div style="background:#fff;border:1px solid var(--line);border-left:5px solid var(--tb-lt);border-radius:12px;padding:18px 20px">'+
+          '<div style="font-size:16px;color:var(--ink);line-height:1.55">You judged this a <b>benign job demand</b> \u2014 a demand that isn\u2019t appraised as stressful. Like a trained cashier ringing routine sales, it never triggers the stress response, so there\u2019s no coping needed.</div>'+
+        '</div>'+
+        '<div style="display:flex;gap:10px;justify-content:center;margin-top:16px"><button class="btn ghost" id="apReconsider">Actually, it is stressful</button><button class="btn primary" id="apNext2">Next scenario \u2192</button></div>');
+      host.appendChild(wrap);
+      host.querySelector('#apReconsider').onclick=function(){ step=1; draw(); };
+      host.querySelector('#apNext2').onclick=function(){ si=(si+1)%scen.length; step=0; pick={}; draw(); };
+    }
+    draw();
+  };
+
+  /* ============================================================
+     TOOL 3 · STRESSOR SORTING CHALLENGE
+  ============================================================ */
+  inits.sort = function(slide){
+    var host = slide.querySelector('#sortTool');
+    var items=[
+      {s:"Role conflict",q:"wh",why:"conflicting expectations others hold of you thwart your goals."},
+      {s:"Role ambiguity",q:"wh",why:"lack of information about what your role requires."},
+      {s:"Role overload",q:"wh",why:"too many demanding roles to perform any of them well."},
+      {s:"Daily hassles",q:"wh",why:"minor day-to-day annoyances that get in the way."},
+      {s:"Time pressure",q:"wc",why:"tight deadlines are exhausting but rewarding to meet."},
+      {s:"Work complexity",q:"wc",why:"work that stretches your knowledge, skills, and abilities."},
+      {s:"Work responsibility",q:"wc",why:"obligations toward others \u2014 demanding yet meaningful."},
+      {s:"Work\u2013family conflict",q:"nh",why:"work and family roles interfering with each other."},
+      {s:"Negative life events",q:"nh",why:"e.g., divorce or a death that hinders life goals."},
+      {s:"Financial uncertainty",q:"nh",why:"worry over livelihood, savings, or paying expenses."},
+      {s:"Family time demands",q:"nc",why:"time devoted to family activities \u2014 demanding yet positive."},
+      {s:"Personal development",q:"nc",why:"education, hobbies, or volunteering that fosters growth."},
+      {s:"Positive life events",q:"nc",why:"marriage or a new family member \u2014 stressful yet uplifting."}
+    ];
+    var quads=[["wh","Work \u00b7 Hindrance","coral"],["wc","Work \u00b7 Challenge","gold"],["nh","Nonwork \u00b7 Hindrance","coral"],["nc","Nonwork \u00b7 Challenge","gold"]];
+    var qname={wh:"Work \u00b7 Hindrance",wc:"Work \u00b7 Challenge",nh:"Nonwork \u00b7 Hindrance",nc:"Nonwork \u00b7 Challenge"};
+    var order=shuffle(items.slice()), i=0, score=0, answered=false;
+    function draw(){
+      if(i>=order.length){
+        host.innerHTML='<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;gap:16px">'+
+          '<div style="font-size:22px;font-weight:800;color:var(--tb-dkr)">All 13 sorted!</div>'+
+          '<div style="font-size:54px;font-weight:800;color:var(--tb)">'+score+' / '+order.length+'</div>'+
+          '<div class="small muted">'+(score===order.length?'Perfect \u2014 you\u2019ve mastered the 2\u00d72 framework.':'Nice work. Review the four quadrants and try again.')+'</div>'+
+          '<button class="btn primary" id="srReset">Shuffle &amp; retry</button></div>';
+        host.querySelector('#srReset').onclick=function(){ order=shuffle(items.slice()); i=0; score=0; answered=false; draw(); };
+        return;
+      }
+      var it=order[i];
+      host.innerHTML=
+        '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px"><div class="small muted" style="font-weight:800">Item '+(i+1)+' of '+order.length+'</div><div class="pillbadge" style="background:var(--tb-pale);color:var(--tb-dk)">Score '+score+'</div></div>'+
+        '<div style="background:var(--tb-dkr);color:#fff;border-radius:14px;padding:20px;text-align:center;margin-bottom:16px"><div style="font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:#B7D4DA;font-weight:800">Where does this belong?</div><div style="font-size:30px;font-weight:800;margin-top:6px">'+it.s+'</div></div>'+
+        '<div id="srQuads" style="display:grid;grid-template-columns:1fr 1fr;gap:12px"></div>'+
+        '<div id="srFb" style="min-height:52px;margin-top:14px"></div>';
+      var qg=host.querySelector('#srQuads');
+      quads.forEach(function(q){
+        var b=document.createElement('button'); b.className='chipbtn'; b.style.cssText='padding:16px;font-size:15px;font-weight:700;border-width:2px';
+        b.textContent=q[1];
+        b.onclick=function(){
+          if(answered)return; answered=true;
+          var correct=q[0]===it.q;
+          if(correct){ score++; b.classList.add('on'); if(q[2]) b.classList.add(q[2]); }
+          else { b.style.borderColor='var(--coral)'; b.style.color='var(--coral-dk)'; b.style.background='#F7E4DF';
+            Array.prototype.forEach.call(qg.children,function(c,ci){ if(quads[ci][0]===it.q){ c.classList.add('on'); if(quads[ci][2])c.classList.add(quads[ci][2]); } }); }
+          var fb=host.querySelector('#srFb');
+          fb.innerHTML='<div style="background:'+(correct?'#EFF6F7':'#FBF0EE')+';border:1px solid '+(correct?'var(--tb-pale)':'#F0D3CD')+';border-radius:10px;padding:12px 16px;font-size:14px;color:var(--ink-soft);line-height:1.45"><b style="color:'+(correct?'var(--tb-dk)':'var(--coral-dk)')+'">'+(correct?'Correct! ':'It\u2019s '+qname[it.q]+' \u2014 ')+'</b>'+it.why+' <button class="btn sm primary" id="srNext" style="margin-left:10px">Next \u2192</button></div>';
+          host.querySelector('#srNext').onclick=function(){ i++; answered=false; draw(); };
+        };
+        qg.appendChild(b);
+      });
+    }
+    draw();
+  };
+
+  /* ============================================================
+     TOOL 4 · LIFE STRESS CALCULATOR (Holmes-Rahe)
+  ============================================================ */
+  inits.srrs = function(slide){
+    var host = slide.querySelector('#srrsTool');
+    var ev=[["Death of a spouse",100],["Divorce",73],["Marital separation",65],["Jail term",63],["Death of close family member",63],["Personal illness",53],["Marriage",50],["Fired at work",47],["Marital reconciliation",45],["Retirement",45],["Pregnancy",40],["Gain of new family member",39],["Death of close friend",37],["Change in occupation",36],["Child leaving home",29],["Trouble with in-laws",29],["Outstanding achievement",28],["Begin or end school",26],["Change in living conditions",25],["Trouble with boss",23],["Change in work hours",20],["Change in residence",20],["Change in schools",20],["Change in social activities",18],["Change in sleeping habits",16],["Change in family get-togethers",15],["Change in eating habits",15],["Vacations",13],["The holiday season",12],["Minor violations of the law",11]];
+    host.innerHTML=
+      '<div style="display:flex;gap:22px;height:100%">'+
+        '<div class="scrolly" id="srrsList" style="flex:1.35;overflow-y:auto;padding-right:8px;display:grid;grid-template-columns:1fr 1fr;gap:6px 12px;align-content:start"></div>'+
+        '<div style="flex:1;display:flex;flex-direction:column;justify-content:center;gap:16px;border-left:1px solid var(--line);padding-left:22px">'+
+          '<div class="small muted" style="font-weight:800;letter-spacing:.1em;text-transform:uppercase">Your life-change total</div>'+
+          '<div style="display:flex;align-items:baseline;gap:6px"><div id="srrsTotal" style="font-size:64px;font-weight:800;color:var(--tb);line-height:.9">0</div><div class="small muted">points</div></div>'+
+          '<div class="meter" style="height:16px"><div class="fill" id="srrsFill" style="width:0%"></div></div>'+
+          '<div id="srrsBand" class="pillbadge" style="background:var(--tb-pale);color:var(--tb-dk);align-self:flex-start">Low life change</div>'+
+          '<div id="srrsMsg" class="small" style="color:var(--ink-soft);line-height:1.5">Check every event you\u2019ve experienced in the past 12 months. Higher totals signal greater risk that stress affects health.</div>'+
+          '<button class="btn ghost sm" id="srrsClear" style="align-self:flex-start">Clear all</button>'+
+        '</div>'+
+      '</div>';
+    var listEl=host.querySelector('#srrsList'), total=0;
+    ev.forEach(function(e,ix){
+      var r=document.createElement('label'); r.style.cssText='display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--ink);cursor:pointer;padding:5px 8px;border-radius:8px;border:1px solid transparent';
+      r.innerHTML='<input type="checkbox" data-v="'+e[1]+'" style="width:15px;height:15px;accent-color:#4F97A3;cursor:pointer"><span style="flex:1;line-height:1.2">'+e[0]+'</span><b style="color:var(--tb-lt);font-size:11.5px">'+e[1]+'</b>';
+      r.querySelector('input').onchange=function(){
+        total += (this.checked?1:-1)*parseInt(this.getAttribute('data-v'),10);
+        r.style.background=this.checked?'var(--tb-mist)':'transparent';
+        r.style.borderColor=this.checked?'var(--tb-pale)':'transparent';
+        update();
+      };
+      listEl.appendChild(r);
+    });
+    function update(){
+      host.querySelector('#srrsTotal').textContent=total;
+      host.querySelector('#srrsFill').style.width=Math.min(100,total/450*100)+'%';
+      var b,bg,fg,msg,col;
+      if(total<150){ b='Low life change';bg='var(--tb-pale)';fg='var(--tb-dk)';col='var(--tb)';msg='Below 150 \u2014 a relatively low amount of life change and lower stress-related health risk.'; }
+      else if(total<300){ b='Moderate life change';bg='#F7EAD0';fg='var(--gold-dk)';col='var(--gold-dk)';msg='150\u2013299 \u2014 a moderate load. Research links this range to roughly a 50% chance of a stress-related health change.'; }
+      else { b='High life change';bg='#F7E4DF';fg='var(--coral-dk)';col='var(--coral-dk)';msg='300+ \u2014 a high load, associated with an ~80% chance of a stress-related health change. Recovery, support, and coping matter most here.'; }
+      var pill=host.querySelector('#srrsBand'); pill.textContent=b; pill.style.background=bg; pill.style.color=fg;
+      host.querySelector('#srrsTotal').style.color=col;
+      host.querySelector('#srrsFill').style.background='linear-gradient(90deg,var(--tb),'+col+')';
+      host.querySelector('#srrsMsg').textContent=msg;
+    }
+    host.querySelector('#srrsClear').onclick=function(){ total=0; Array.prototype.forEach.call(listEl.querySelectorAll('input'),function(c){ c.checked=false; c.parentElement.style.background='transparent'; c.parentElement.style.borderColor='transparent'; }); update(); };
+  };
+
+  /* ============================================================
+     TOOL 5 · COPING STRATEGY ADVISOR
+  ============================================================ */
+  inits.cope = function(slide){
+    var host = slide.querySelector('#copeTool');
+    var scen=[
+      {v:'work',label:'A crushing workload at work'},
+      {v:'boss',label:'Ongoing trouble with your boss'},
+      {v:'exam',label:'A high-stakes exam you feel unready for'},
+      {v:'move',label:'A stressful cross-country move'}
+    ];
+    var cells={
+      bp:{name:'Behavioral \u00b7 Problem-focused',ex:['Working harder','Seeking assistance','Acquiring additional resources'],tone:'You act on the demand directly \u2014 the approach managers most want for heavy workloads.'},
+      be:{name:'Behavioral \u00b7 Emotion-focused',ex:['Engaging in alternative activities','Seeking support','Venting anger'],tone:'You act to relieve the feeling. Useful for recharging, but the demand itself remains.'},
+      cp:{name:'Cognitive \u00b7 Problem-focused',ex:['Strategizing','Self-motivating','Changing priorities'],tone:'You think your way toward the demand \u2014 planning a smarter path through it.'},
+      ce:{name:'Cognitive \u00b7 Emotion-focused',ex:['Avoiding, distancing, ignoring','Looking for the positive in the negative','Reappraising'],tone:'You reframe how you feel. It eases distress, but leaves the underlying problem in place.'}
+    };
+    var pick={s:'work',focus:null,method:null};
+    function seg(active,opts,cb){ var h='<div style="display:flex;gap:8px;flex-wrap:wrap">'; opts.forEach(function(o){ h+='<button class="chipbtn'+(active===o.k?' on':'')+'" data-k="'+o.k+'" style="padding:10px 16px;font-size:14px">'+o.t+'</button>'; }); return h+'</div>'; }
+    function draw(){
+      host.innerHTML=
+        '<div style="display:flex;gap:24px;height:100%">'+
+          '<div style="flex:1;display:flex;flex-direction:column;gap:18px;border-right:1px solid var(--line);padding-right:22px">'+
+            '<div><div class="small muted" style="font-weight:800;letter-spacing:.08em;text-transform:uppercase;margin-bottom:8px">1 \u00b7 Your situation</div><select id="cpScen" style="width:100%;padding:11px 12px;border-radius:10px;border:1.5px solid var(--line);font-size:14.5px;color:var(--ink);font-family:inherit;background:#fff"></select></div>'+
+            '<div><div class="small muted" style="font-weight:800;letter-spacing:.08em;text-transform:uppercase;margin-bottom:8px">2 \u00b7 Your goal right now</div><div id="cpFocus"></div></div>'+
+            '<div><div class="small muted" style="font-weight:800;letter-spacing:.08em;text-transform:uppercase;margin-bottom:8px">3 \u00b7 How you prefer to act</div><div id="cpMethod"></div></div>'+
+          '</div>'+
+          '<div style="flex:1.05;display:flex;flex-direction:column;justify-content:center" id="cpResult"></div>'+
+        '</div>';
+      var sel=host.querySelector('#cpScen');
+      scen.forEach(function(s){ var o=document.createElement('option'); o.value=s.v; o.textContent=s.label; if(s.v===pick.s)o.selected=true; sel.appendChild(o); });
+      sel.onchange=function(){ pick.s=this.value; result(); };
+      host.querySelector('#cpFocus').innerHTML=seg(pick.focus,[{k:'p',t:'Change the situation'},{k:'e',t:'Ease how I feel'}]);
+      host.querySelector('#cpMethod').innerHTML=seg(pick.method,[{k:'b',t:'Do something'},{k:'c',t:'Think it through'}]);
+      host.querySelector('#cpFocus').querySelectorAll('button').forEach(function(b){ b.onclick=function(){ pick.focus=this.getAttribute('data-k'); draw(); }; });
+      host.querySelector('#cpMethod').querySelectorAll('button').forEach(function(b){ b.onclick=function(){ pick.method=this.getAttribute('data-k'); draw(); }; });
+      result();
+    }
+    function result(){
+      var box=host.querySelector('#cpResult');
+      if(!pick.focus||!pick.method){
+        box.innerHTML='<div style="text-align:center;color:#8AA6AD"><div style="font-size:46px;margin-bottom:8px">\u25C8</div><div class="small" style="max-width:260px;margin:0 auto;line-height:1.5">Pick a goal and a method, and the advisor will place you in one of the four coping quadrants from Table 5-3.</div></div>';
+        return;
+      }
+      var key=(pick.method==='b'?'b':'c')+(pick.focus==='p'?'p':'e');
+      var c=cells[key]; var isProblem=pick.focus==='p';
+      box.innerHTML=
+        '<div style="background:#fff;border:1px solid var(--line);border-top:6px solid '+(isProblem?'var(--tb)':'var(--gold)')+';border-radius:14px;padding:20px 22px;box-shadow:var(--shadow-sm)">'+
+          '<div class="pillbadge" style="background:'+(isProblem?'var(--tb-pale)':'#F7EAD0')+';color:'+(isProblem?'var(--tb-dk)':'var(--gold-dk)')+'">Your quadrant</div>'+
+          '<div style="font-size:22px;font-weight:800;color:var(--ink);margin:8px 0 4px">'+c.name+'</div>'+
+          '<div class="small" style="color:var(--ink-soft);line-height:1.5">'+c.tone+'</div>'+
+          '<div style="margin-top:14px;font-size:12px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--tb-dk)">Try these moves</div>'+
+          '<ul class="bullets" style="margin-top:8px">'+c.ex.map(function(x){return '<li>'+x+'</li>';}).join('')+'</ul>'+
+          (isProblem?'':'<div style="margin-top:12px;background:#FBF0EE;border:1px solid #F0D3CD;border-radius:9px;padding:10px 13px;font-size:12.5px;color:var(--coral-dk);line-height:1.4">Reminder: emotion-focused coping treats the feeling, not the cause \u2014 the demand that triggered it remains.</div>')+
+        '</div>';
+    }
+    draw();
+  };
+
+})();
+</script>
+
+<script>
+(function(){
+  "use strict";
+  var inits = window.__inits;
+
+  /* ============================================================
+     TOOL 6 · STRAIN & THE BODY SYSTEMS EXPLORER
+  ============================================================ */
+  inits.body = function(slide){
+    var host = slide.querySelector('#bodyTool');
+    var FAM = {
+      phys:{name:'Physiological strain', col:'#4F97A3', bg:'var(--tb-pale)', fg:'var(--tb-dk)'},
+      psych:{name:'Psychological strain', col:'#E0A43B', bg:'#F7EAD0', fg:'var(--gold-dk)'},
+      behav:{name:'Behavioral strain', col:'#CE6A5A', bg:'#F7E4DF', fg:'var(--coral-dk)'}
+    };
+    var SYS = [
+      {id:'psych', n:1, fam:'psych', title:'Brain \u00b7 Psychological', pos:[160,52],
+       body:'Depression, anxiety, irritability, forgetfulness, and trouble thinking clearly. Confidence and creativity drop, and prolonged exposure produces <b>burnout</b> \u2014 emotional, mental, and physical exhaustion.'},
+      {id:'msk', n:2, fam:'phys', title:'Muscles \u00b7 Musculoskeletal', pos:[120,118],
+       body:'Tension headaches, a tight neck and shoulders, and lower-back pain are all common physiological strains under sustained stress.'},
+      {id:'immune', n:3, fam:'phys', title:'Immune system', pos:[200,118],
+       body:'Stress lowers immune effectiveness, so it is harder to fight off illness and infection. It is no accident that colds spike <b>during and right after</b> a high-stress stretch like finals week.'},
+      {id:'cardio', n:4, fam:'phys', title:'Heart \u00b7 Cardiovascular', pos:[160,150],
+       body:'A racing heart, elevated blood pressure, and coronary artery disease. A single high-pressure deadline can raise the odds of a heart attack in the next 24 hours <b>sixfold</b>.'},
+      {id:'gi', n:5, fam:'phys', title:'Gut \u00b7 Gastrointestinal', pos:[160,215],
+       body:'Stomachaches, indigestion, diarrhea, and constipation \u2014 the digestive system is highly reactive to the body\u2019s stress chemicals.'},
+      {id:'behav', n:6, fam:'behav', title:'Behavior \u00b7 Behavioral', pos:null,
+       body:'Not a body location \u2014 these are actions: alcohol and drug use, teeth grinding, compulsive behaviors, and overeating. They often begin as coping and become strains of their own.'}
+    ];
+    function dotSvg(){
+      var s='<svg viewBox="0 0 320 430" style="width:100%;height:100%;max-height:340px" xmlns="http://www.w3.org/2000/svg">';
+      // figure
+      s+='<g fill="#DCEDEF" stroke="#7FB8C2" stroke-width="2">';
+      s+='<circle cx="160" cy="52" r="30"/>';                                   // head
+      s+='<rect x="150" y="80" width="20" height="16" rx="6"/>';               // neck
+      s+='<path d="M116 96 q44 -14 88 0 l10 118 q-54 16 -108 0 z"/>';          // torso
+      s+='<rect x="96" y="104" width="20" height="96" rx="10"/>';             // left arm
+      s+='<rect x="204" y="104" width="20" height="96" rx="10"/>';           // right arm
+      s+='<rect x="132" y="212" width="22" height="150" rx="11"/>';          // left leg
+      s+='<rect x="166" y="212" width="22" height="150" rx="11"/>';          // right leg
+      s+='</g>';
+      // hotspots
+      SYS.forEach(function(sy){
+        if(!sy.pos)return;
+        var f=FAM[sy.fam];
+        s+='<g class="hs" data-id="'+sy.id+'" style="cursor:pointer">';
+        s+='<circle class="hsRing" cx="'+sy.pos[0]+'" cy="'+sy.pos[1]+'" r="16" fill="#fff" stroke="'+f.col+'" stroke-width="3"/>';
+        s+='<text x="'+sy.pos[0]+'" y="'+(sy.pos[1]+5)+'" text-anchor="middle" font-size="15" font-weight="800" fill="'+f.col+'">'+sy.n+'</text>';
+        s+='</g>';
+      });
+      s+='</svg>';
+      return s;
+    }
+    host.innerHTML=
+      '<div style="display:flex;gap:22px;height:100%">'+
+        '<div style="flex:.85;display:flex;flex-direction:column;align-items:center;min-height:0">'+
+          '<div style="flex:1;min-height:0;width:100%;display:flex;justify-content:center">'+dotSvg()+'</div>'+
+        '</div>'+
+        '<div style="flex:1.25;display:flex;flex-direction:column;min-height:0">'+
+          '<div class="small muted" style="font-weight:800;letter-spacing:.08em;text-transform:uppercase;margin-bottom:8px">Pick a system</div>'+
+          '<div id="bdChips" style="display:flex;flex-wrap:wrap;gap:7px;margin-bottom:14px"></div>'+
+          '<div id="bdInfo" style="flex:1;min-height:0;background:#fff;border:1px solid var(--line);border-radius:14px;padding:18px 20px;box-shadow:var(--shadow-sm);overflow:auto"></div>'+
+          '<div style="display:flex;gap:14px;margin-top:12px;font-size:12px;color:var(--ink-soft);flex-wrap:wrap">'+
+            '<span style="display:flex;align-items:center;gap:6px"><span style="width:11px;height:11px;border-radius:50%;background:#4F97A3"></span>Physiological</span>'+
+            '<span style="display:flex;align-items:center;gap:6px"><span style="width:11px;height:11px;border-radius:50%;background:#E0A43B"></span>Psychological</span>'+
+            '<span style="display:flex;align-items:center;gap:6px"><span style="width:11px;height:11px;border-radius:50%;background:#CE6A5A"></span>Behavioral</span>'+
+          '</div>'+
+        '</div>'+
+      '</div>';
+    var chipWrap=host.querySelector('#bdChips'), info=host.querySelector('#bdInfo');
+    SYS.forEach(function(sy){
+      var f=FAM[sy.fam];
+      var c=document.createElement('button'); c.className='chipbtn'; c.dataset.id=sy.id;
+      c.innerHTML=(sy.pos?('<b style="color:'+f.col+'">'+sy.n+'</b> '):'')+sy.title.split(' \u00b7 ')[0];
+      c.onclick=function(){ select(sy.id); };
+      chipWrap.appendChild(c);
+    });
+    function select(id){
+      var sy=SYS.filter(function(x){return x.id===id;})[0]; var f=FAM[sy.fam];
+      info.innerHTML='<div class="pillbadge" style="background:'+f.bg+';color:'+f.fg+'">'+f.name+'</div>'+
+        '<div style="font-size:21px;font-weight:800;color:var(--ink);margin:10px 0 8px">'+sy.title+'</div>'+
+        '<div style="font-size:15px;color:var(--ink-soft);line-height:1.6">'+sy.body+'</div>';
+      Array.prototype.forEach.call(chipWrap.children,function(c){ c.classList.toggle('on', c.dataset.id===id); });
+      var svg=host.querySelector('svg');
+      Array.prototype.forEach.call(svg.querySelectorAll('.hs'),function(g){
+        var on=g.dataset.id===id; var ring=g.querySelector('.hsRing');
+        ring.setAttribute('r', on?'19':'16');
+        ring.setAttribute('fill', on?FAM[SYS.filter(function(x){return x.id===g.dataset.id;})[0].fam].col:'#fff');
+        var txt=g.querySelector('text'); txt.setAttribute('fill', on?'#fff':FAM[SYS.filter(function(x){return x.id===g.dataset.id;})[0].fam].col);
+      });
+    }
+    // wire svg clicks
+    Array.prototype.forEach.call(host.querySelectorAll('.hs'),function(g){ g.addEventListener('click',function(){ select(g.dataset.id); }); });
+    select('cardio');
+  };
+
+  /* ============================================================
+     TOOL 7 · TYPE A BEHAVIOR ASSESSMENT
+  ============================================================ */
+  inits.typea = function(slide){
+    var host = slide.querySelector('#typeaTool');
+    var items=[
+      "I often feel rushed, even when I have enough time.",
+      "I tend to speak quickly and finish other people\u2019s sentences.",
+      "Waiting in lines or in slow traffic makes me impatient.",
+      "I try to do two or more things at the same time.",
+      "I feel guilty when I relax or do nothing for a while.",
+      "I am hard-driving and competitive in most things I do.",
+      "I set deadlines and quotas for myself at work and at home.",
+      "It irritates me when people or processes are slow.",
+      "I judge my success mostly by how much I get done.",
+      "I eat, walk, and move quickly.",
+      "I bring a work-like intensity to games and hobbies.",
+      "I get upset with myself when I lose at competitive activities."
+    ];
+    var scores=new Array(items.length).fill(0);
+    host.innerHTML=
+      '<div style="display:flex;gap:22px;height:100%">'+
+        '<div class="scrolly" id="taList" style="flex:1.5;overflow-y:auto;padding-right:10px;display:flex;flex-direction:column;gap:9px"></div>'+
+        '<div style="flex:1;display:flex;flex-direction:column;justify-content:center;gap:14px;border-left:1px solid var(--line);padding-left:22px">'+
+          '<div class="small muted" style="font-weight:800;letter-spacing:.1em;text-transform:uppercase">Your score</div>'+
+          '<div style="display:flex;align-items:baseline;gap:8px"><div id="taSum" style="font-size:60px;font-weight:800;color:var(--tb);line-height:.9">12</div><div class="small muted">/ 84</div></div>'+
+          '<div style="position:relative;height:16px"><div class="meter" style="height:16px"><div class="fill" id="taFill" style="width:0%"></div></div>'+
+            '<div style="position:absolute;top:-4px;left:33.3%;height:24px;width:2px;background:var(--ink-soft)"></div>'+
+            '<div style="position:absolute;top:-4px;left:66.7%;height:24px;width:2px;background:var(--ink-soft)"></div></div>'+
+          '<div style="display:flex;justify-content:space-between;font-size:10.5px;color:#8AA6AD;font-weight:700"><span>Type B \u226436</span><span>mixed</span><span>Type A \u226560</span></div>'+
+          '<div id="taVerdict" class="pillbadge" style="background:var(--tb-pale);color:var(--tb-dk);align-self:flex-start">Answer the 12 items</div>'+
+          '<div id="taMsg" class="small" style="color:var(--ink-soft);line-height:1.5">Rate how much each statement describes you, from 1 (strongly disagree) to 7 (strongly agree).</div>'+
+          '<button class="btn ghost sm" id="taReset" style="align-self:flex-start">Reset</button>'+
+        '</div>'+
+      '</div>';
+    var listEl=host.querySelector('#taList');
+    items.forEach(function(txt, i){
+      var row=document.createElement('div');
+      row.style.cssText='background:#fff;border:1px solid var(--line);border-radius:10px;padding:10px 12px';
+      var seg='<div style="display:flex;gap:4px;margin-top:8px">';
+      for(var v=1;v<=7;v++) seg+='<button data-i="'+i+'" data-v="'+v+'" class="taBtn" style="flex:1;padding:6px 0;border:1.5px solid var(--line);background:#fff;border-radius:7px;font-size:12.5px;font-weight:700;color:var(--ink-soft);cursor:pointer;transition:.12s">'+v+'</button>';
+      seg+='</div>';
+      row.innerHTML='<div style="font-size:13.5px;color:var(--ink);line-height:1.35">'+(i+1)+'. '+txt+'</div>'+seg;
+      listEl.appendChild(row);
+    });
+    function recalc(){
+      var sum=scores.reduce(function(a,b){return a+(b||0);},0);
+      var answered=scores.filter(function(x){return x>0;}).length;
+      var display=sum + (answered<items.length? (items.length-answered):0); // unanswered count as 1 (min)
+      // Treat unanswered as 1 for a live floor so range stays 12..84
+      var eff=0; for(var k=0;k<scores.length;k++) eff+=(scores[k]>0?scores[k]:1);
+      host.querySelector('#taSum').textContent=eff;
+      var pct=(eff-12)/72*100;
+      var fill=host.querySelector('#taFill'); fill.style.width=Math.max(0,Math.min(100,pct))+'%';
+      var v,bg,fg,col,msg;
+      if(eff>=60){ v='Type A pattern';bg='#F7E4DF';fg='var(--coral-dk)';col='var(--coral-dk)';msg='A score of 60+ leans Type A \u2014 time-urgent, competitive, and hypersensitive to demands, with higher risk of strains including coronary heart disease.'; }
+      else if(eff<=36){ v='Type B pattern';bg='var(--tb-pale)';fg='var(--tb-dk)';col='var(--tb)';msg='A score of 36 or below leans Type B \u2014 you sense less stress in life and are less reactive to the stress you do feel.'; }
+      else { v='Mixed A/B';bg='#F7EAD0';fg='var(--gold-dk)';col='var(--gold-dk)';msg='Between 37 and 59 is a blend \u2014 some time-urgency and drive, but not the full hard-driving Type A profile.'; }
+      var pill=host.querySelector('#taVerdict'); pill.textContent=v; pill.style.background=bg; pill.style.color=fg;
+      host.querySelector('#taSum').style.color=col;
+      fill.style.background='linear-gradient(90deg,var(--tb),'+col+')';
+      if(answered>0) host.querySelector('#taMsg').textContent=msg;
+    }
+    listEl.addEventListener('click',function(e){
+      var b=e.target.closest('.taBtn'); if(!b)return;
+      var i=+b.getAttribute('data-i'), v=+b.getAttribute('data-v');
+      scores[i]=v;
+      var row=b.parentElement;
+      Array.prototype.forEach.call(row.querySelectorAll('.taBtn'),function(x){
+        var xv=+x.getAttribute('data-v');
+        if(xv<=v){ x.style.background='var(--tb)'; x.style.color='#fff'; x.style.borderColor='var(--tb)'; }
+        else { x.style.background='#fff'; x.style.color='var(--ink-soft)'; x.style.borderColor='var(--line)'; }
+      });
+      recalc();
+    });
+    host.querySelector('#taReset').onclick=function(){
+      scores=new Array(items.length).fill(0);
+      Array.prototype.forEach.call(listEl.querySelectorAll('.taBtn'),function(x){ x.style.background='#fff'; x.style.color='var(--ink-soft)'; x.style.borderColor='var(--line)'; });
+      host.querySelector('#taSum').textContent='12'; host.querySelector('#taFill').style.width='0%';
+      var pill=host.querySelector('#taVerdict'); pill.textContent='Answer the 12 items'; pill.style.background='var(--tb-pale)'; pill.style.color='var(--tb-dk)';
+      host.querySelector('#taMsg').textContent='Rate how much each statement describes you, from 1 (strongly disagree) to 7 (strongly agree).';
+    };
+    recalc();
+  };
+
+  /* ============================================================
+     TOOL 8 · SOCIAL SUPPORT BUFFER SIMULATOR
+  ============================================================ */
+  inits.buffer = function(slide){
+    var host = slide.querySelector('#bufferTool');
+    host.innerHTML=
+      '<div style="display:flex;gap:24px;height:100%;align-items:center">'+
+        '<div style="flex:1.4"><canvas id="bfCanvas" width="620" height="300" style="width:100%;height:auto;background:#fff;border:1px solid var(--line);border-radius:12px"></canvas></div>'+
+        '<div style="flex:1;display:flex;flex-direction:column;gap:16px">'+
+          '<div><div class="small muted" style="font-weight:800;letter-spacing:.08em;text-transform:uppercase">Social support</div>'+
+            '<div style="display:flex;align-items:baseline;gap:6px;margin:2px 0 8px"><div id="bfLvl" style="font-size:40px;font-weight:800;color:var(--tb)">5</div><div class="small muted">/ 10</div></div>'+
+            '<input type="range" id="bfRange" min="0" max="10" step="1" value="5"></div>'+
+          '<div style="background:var(--tb-mist);border:1px solid var(--tb-pale);border-radius:12px;padding:14px 16px">'+
+            '<div class="small" style="color:var(--ink-soft);line-height:1.4">Strain at a <b>maximum stressor</b>:</div>'+
+            '<div style="display:flex;align-items:baseline;gap:10px;margin-top:4px"><div id="bfStrain" style="font-size:34px;font-weight:800;color:var(--coral-dk)">63</div><div id="bfRed" class="pillbadge" style="background:var(--tb-pale);color:var(--tb-dk)">37% buffered</div></div>'+
+          '</div>'+
+          '<div id="bfMsg" class="small" style="color:var(--ink-soft);line-height:1.55">Support is a <b>moderator</b>: as it rises, the same stressor produces less strain \u2014 the line flattens. At high support, even a maximum stressor causes far less strain.</div>'+
+        '</div>'+
+      '</div>';
+    var cv=host.querySelector('#bfCanvas'), ctx=cv.getContext('2d');
+    var W=620,H=300, mL=48,mR=18,mT=18,mB=40, pW=W-mL-mR, pH=H-mT-mB;
+    function X(x){ return mL + (x/10)*pW; }
+    function Y(s){ return mT + (1-(s/100))*pH; }
+    function strain(x,sup){ return 10*x*(1-sup*0.075); }
+    function line(sup,style,width,dash){
+      ctx.beginPath(); ctx.setLineDash(dash||[]);
+      for(var x=0;x<=10;x+=0.5){ var px=X(x),py=Y(strain(x,sup)); if(x===0)ctx.moveTo(px,py); else ctx.lineTo(px,py); }
+      ctx.strokeStyle=style; ctx.lineWidth=width; ctx.stroke(); ctx.setLineDash([]);
+    }
+    function draw(sup){
+      ctx.clearRect(0,0,W,H);
+      // gridlines
+      ctx.strokeStyle='#EAF3F4'; ctx.lineWidth=1;
+      for(var s=0;s<=100;s+=25){ ctx.beginPath(); ctx.moveTo(mL,Y(s)); ctx.lineTo(W-mR,Y(s)); ctx.stroke();
+        ctx.fillStyle='#8AA6AD'; ctx.font='10px -apple-system,Arial'; ctx.textAlign='right'; ctx.fillText(s,mL-6,Y(s)+3); }
+      for(var x=0;x<=10;x+=2){ ctx.fillStyle='#8AA6AD'; ctx.textAlign='center'; ctx.fillText(x,X(x),H-mB+16); }
+      // axes
+      ctx.strokeStyle='#CFE0E3'; ctx.lineWidth=1.5; ctx.beginPath(); ctx.moveTo(mL,mT); ctx.lineTo(mL,H-mB); ctx.lineTo(W-mR,H-mB); ctx.stroke();
+      // axis labels
+      ctx.fillStyle='#4A6771'; ctx.font='bold 11px -apple-system,Arial'; ctx.textAlign='center';
+      ctx.fillText('Stressor intensity \u2192',(mL+W-mR)/2, H-6);
+      ctx.save(); ctx.translate(13,(mT+H-mB)/2); ctx.rotate(-Math.PI/2); ctx.fillText('Strain \u2192',0,0); ctx.restore();
+      // reference lines (no support / full support)
+      line(0,'rgba(206,106,90,.28)',2,[5,5]);
+      line(10,'rgba(79,151,163,.28)',2,[5,5]);
+      // current line + fill
+      ctx.beginPath();
+      for(var xx=0;xx<=10;xx+=0.5){ var px=X(xx),py=Y(strain(xx,sup)); if(xx===0)ctx.moveTo(px,py); else ctx.lineTo(px,py); }
+      ctx.lineTo(X(10),Y(0)); ctx.lineTo(X(0),Y(0)); ctx.closePath();
+      var g=ctx.createLinearGradient(0,mT,0,H-mB); g.addColorStop(0,'rgba(224,164,59,.20)'); g.addColorStop(1,'rgba(224,164,59,0)');
+      ctx.fillStyle=g; ctx.fill();
+      line(sup, '#357079', 3.5);
+      // point markers on current line
+      for(var m=0;m<=10;m+=2){ ctx.beginPath(); ctx.arc(X(m),Y(strain(m,sup)),3.5,0,7); ctx.fillStyle='#357079'; ctx.fill(); }
+      // legend
+      ctx.textAlign='left'; ctx.font='10px -apple-system,Arial';
+      ctx.fillStyle='rgba(206,106,90,.9)'; ctx.fillText('\u2014 no support',mL+8,mT+12);
+      ctx.fillStyle='rgba(79,151,163,.9)'; ctx.fillText('\u2014 full support',mL+92,mT+12);
+    }
+    function update(sup){
+      draw(sup);
+      host.querySelector('#bfLvl').textContent=sup;
+      var st=strain(10,sup);
+      host.querySelector('#bfStrain').textContent=Math.round(st);
+      var red=Math.round(sup*7.5);
+      host.querySelector('#bfRed').textContent=red+'% buffered';
+      var col = st>66?'var(--coral-dk)':st>33?'var(--gold-dk)':'var(--tb-dk)';
+      host.querySelector('#bfStrain').style.color=col;
+      host.querySelector('#bfMsg').innerHTML= sup===0
+        ? 'With <b>no support</b>, a maximum stressor drives strain to its ceiling. This is the steep red reference line.'
+        : sup===10
+        ? 'With <b>full support</b>, the same maximum stressor produces only a fraction of the strain \u2014 the line is nearly flat. This is the buffering effect at its strongest.'
+        : 'Support is a <b>moderator</b>: as it rises, the same stressor produces less strain \u2014 the line flattens between the two reference curves.';
+    }
+    host.querySelector('#bfRange').addEventListener('input',function(){ update(+this.value); });
+    update(5);
+  };
+
+  /* ============================================================
+     TOOL 9 · STRESSOR \u2192 OUTCOME VISUALIZER
+  ============================================================ */
+  inits.corr = function(slide){
+    var host = slide.querySelector('#corrTool');
+    var model={
+      hindrance:{ perf:{r:-0.10,strength:'weak',swing:9}, commit:{r:-0.50,strength:'strong',swing:36} },
+      challenge:{ perf:{r:0.10,strength:'weak',swing:9},  commit:{r:0.30,strength:'moderate',swing:22} }
+    };
+    var type='hindrance', level=50;
+    host.innerHTML=
+      '<div style="display:flex;flex-direction:column;height:100%;gap:16px">'+
+        '<div style="display:flex;gap:20px;align-items:center;flex-wrap:wrap">'+
+          '<div style="display:flex;gap:8px" id="crToggle">'+
+            '<button class="chipbtn on coral" data-t="hindrance" style="padding:10px 18px;font-size:14px">Hindrance stressor</button>'+
+            '<button class="chipbtn" data-t="challenge" style="padding:10px 18px;font-size:14px">Challenge stressor</button>'+
+          '</div>'+
+          '<div style="flex:1;min-width:240px"><div style="display:flex;justify-content:space-between;font-size:12px;color:#8AA6AD;font-weight:700"><span>Stressor level</span><span id="crLvlTxt">50%</span></div>'+
+          '<input type="range" id="crRange" min="0" max="100" step="1" value="50" style="margin-top:4px"></div>'+
+        '</div>'+
+        '<div style="display:flex;gap:18px;flex:1">'+
+          crMeter('perf','Job performance')+
+          crMeter('commit','Organizational commitment')+
+        '</div>'+
+        '<div id="crMsg" class="callout" style="margin-top:0"><div></div></div>'+
+      '</div>';
+    function crMeter(id,label){
+      return '<div style="flex:1;background:#fff;border:1px solid var(--line);border-radius:14px;padding:18px 20px;box-shadow:var(--shadow-sm);display:flex;flex-direction:column;justify-content:center">'+
+        '<div style="font-size:16px;font-weight:800;color:var(--ink);margin-bottom:2px">'+label+'</div>'+
+        '<div id="cr_'+id+'_cap" class="small muted" style="margin-bottom:12px">correlation \u2014</div>'+
+        '<div style="position:relative;height:26px"><div class="meter" style="height:26px"><div class="fill" id="cr_'+id+'_fill" style="width:50%"></div></div>'+
+          '<div style="position:absolute;top:-5px;left:50%;height:36px;width:2px;background:var(--ink-soft)"></div></div>'+
+        '<div style="display:flex;justify-content:space-between;align-items:center;margin-top:10px">'+
+          '<span class="small muted">baseline 50</span>'+
+          '<span id="cr_'+id+'_val" style="font-size:26px;font-weight:800;color:var(--ink)">50</span>'+
+        '</div></div>';
+    }
+    function setMeter(id,d){
+      var val=50 + (level/100)*d.swing*(d.r<0?-1:1);
+      val=Math.max(0,Math.min(100,val));
+      var fill=host.querySelector('#cr_'+id+'_fill'); fill.style.width=val+'%';
+      var pos = d.r>0;
+      fill.style.background = pos? 'linear-gradient(90deg,var(--tb),#6FB686)' : 'linear-gradient(90deg,var(--coral),#E29486)';
+      host.querySelector('#cr_'+id+'_val').textContent=Math.round(val);
+      host.querySelector('#cr_'+id+'_val').style.color = pos?'var(--tb-dk)':'var(--coral-dk)';
+      var sign=d.r>0?'+':'\u2212';
+      host.querySelector('#cr_'+id+'_cap').innerHTML='correlation <b style="color:'+(pos?'var(--tb-dk)':'var(--coral-dk)')+'">'+sign+Math.abs(d.r).toFixed(2)+'</b> \u00b7 '+d.strength+(pos?' positive':' negative');
+    }
+    function update(){
+      var m=model[type];
+      setMeter('perf',m.perf); setMeter('commit',m.commit);
+      host.querySelector('#crLvlTxt').textContent=level+'%';
+      var msg = type==='hindrance'
+        ? 'Hindrance stressors are <b>harmful</b> on both outcomes: a <b>weak</b> negative link to performance (\u2212.10) but a <b>strong</b> negative link to commitment (\u2212.50). Push the level up and watch commitment fall hardest.'
+        : 'Challenge stressors are <b>beneficial</b> on balance: a <b>weak</b> positive link to performance (+.10) and a <b>moderate</b> positive link to commitment (+.30) \u2014 engagement outweighs the added strain.';
+      host.querySelector('#crMsg').querySelector('div').innerHTML=msg;
+      host.querySelector('#crMsg').style.background = type==='hindrance'?'#FBF0EE':'#FBF6EC';
+      host.querySelector('#crMsg').style.borderColor = type==='hindrance'?'#F0D3CD':'#F0E3C4';
+    }
+    host.querySelector('#crToggle').addEventListener('click',function(e){
+      var b=e.target.closest('button'); if(!b)return; type=b.getAttribute('data-t');
+      Array.prototype.forEach.call(this.children,function(c){
+        var on=c===b; c.classList.toggle('on',on);
+        c.classList.remove('coral','gold');
+        if(on) c.classList.add(type==='hindrance'?'coral':'gold');
+      });
+      update();
+    });
+    host.querySelector('#crRange').addEventListener('input',function(){ level=+this.value; update(); });
+    update();
+  };
+
+  /* ============================================================
+     TOOL 10 · STRESS-MANAGEMENT PLAN BUILDER
+  ============================================================ */
+  inits.mgmt = function(slide){
+    var host = slide.querySelector('#mgmtTool');
+    var cols=[
+      {key:'stressors', title:'Reduce stressors', col:'#CE6A5A', bg:'#F7E4DF', fg:'var(--coral-dk)',
+       cards:[
+        {t:'Job sharing',d:'Two people share one role, cutting role overload.'},
+        {t:'Sabbaticals',d:'A clean break to recover \u2014 but the job\u2019s stressors are unchanged on return.'},
+        {t:'No working through lunch',d:'Limits daily hassles and protects recovery time.'},
+        {t:'Compressed / flextime',d:'Control over hours eases work\u2013family conflict.'}
+       ]},
+      {key:'resources', title:'Provide resources', col:'#4F97A3', bg:'var(--tb-pale)', fg:'var(--tb-dk)',
+       cards:[
+        {t:'Skills & training',d:'More competence \u2192 fewer demands feel taxing; builds control.'},
+        {t:'Regular breaks',d:'Replenishes energy so recovery keeps pace with demands.'},
+        {t:'Telecommuting',d:'Flexibility to balance work and nonwork roles.'},
+        {t:'Support network',d:'Instrumental & emotional support buffers stressor\u2192strain.'}
+       ]},
+      {key:'strains', title:'Reduce strains', col:'#E0A43B', bg:'#F7EAD0', fg:'var(--gold-dk)',
+       cards:[
+        {t:'Relaxation / meditation',d:'Lowers physiological arousal (Benson\u2019s response).'},
+        {t:'Biofeedback',d:'Trains a calmer heart rhythm under pressure.'},
+        {t:'CBT self-talk',d:'Reframes demands to cut anxiety; builds resilience.'},
+        {t:'Wellness / EAP & exercise',d:'Improves health; strong ROI (~$400/employee).'}
+       ]}
+    ];
+    var chosen={stressors:new Set(),resources:new Set(),strains:new Set()};
+    var html='<div style="display:flex;flex-direction:column;height:100%;gap:14px">'+
+      '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;flex:1;min-height:0">';
+    cols.forEach(function(c){
+      html+='<div style="display:flex;flex-direction:column;min-height:0">'+
+        '<div class="pillbadge" style="background:'+c.bg+';color:'+c.fg+';text-align:center;margin-bottom:8px">'+c.title+'</div>'+
+        '<div class="scrolly" style="flex:1;min-height:0;overflow-y:auto;display:flex;flex-direction:column;gap:8px;padding-right:4px">';
+      c.cards.forEach(function(card,ci){
+        html+='<button class="mgCard" data-k="'+c.key+'" data-i="'+ci+'" style="text-align:left;border:1.5px solid var(--line);background:#fff;border-radius:10px;padding:11px 13px;cursor:pointer;transition:.14s">'+
+          '<div style="font-size:14px;font-weight:800;color:var(--ink)">'+card.t+'</div>'+
+          '<div style="font-size:12px;color:var(--ink-soft);line-height:1.35;margin-top:3px">'+card.d+'</div></button>';
+      });
+      html+='</div></div>';
+    });
+    html+='</div><div id="mgSummary" style="flex:none"></div></div>';
+    host.innerHTML=html;
+
+    function summary(){
+      var ns=chosen.stressors.size, nr=chosen.resources.size, nt=chosen.strains.size, total=ns+nr+nt;
+      var box=host.querySelector('#mgSummary');
+      if(total===0){
+        box.innerHTML='<div class="callout" style="margin:0"><div>You\u2019re the manager. Select interventions above to build a program \u2014 the plan is strongest when it covers the whole chain: <b>reduce stressors \u2192 provide resources \u2192 reduce strains</b>.</div></div>';
+        return;
+      }
+      var cov=[ns>0,nr>0,nt>0].filter(Boolean).length;
+      var covTxt=['Stressors','Resources','Strains'].map(function(l,ix){
+        var on=[ns,nr,nt][ix]>0;
+        return '<span style="display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:700;color:'+(on?'var(--tb-dk)':'#B7C6C9')+'">'+(on?'\u2713':'\u25cb')+' '+l+'</span>';
+      }).join('<span style="color:#CFE0E3">\u2192</span>');
+      var notes=[];
+      if(ns>0) notes.push('Reducing stressors works best for <b>hindrance</b> stressors; note that <b>sabbaticals</b> give recovery but don\u2019t change the underlying job.');
+      if(ns===0 && nt>0) notes.push('You\u2019re treating <b>strains</b> without touching their <b>causes</b> \u2014 effective for symptoms, but the stressors remain.');
+      if(nr>0 && !notes.length) notes.push('Providing resources builds capacity and a sense of control that fosters problem-focused coping.');
+      if(cov===3) notes.unshift('<b>Full-chain program.</b> You\u2019re addressing stressors, resources, and strains together \u2014 the most robust approach.');
+      box.innerHTML='<div style="background:#fff;border:1px solid var(--line);border-radius:12px;padding:12px 16px;box-shadow:var(--shadow-sm)">'+
+        '<div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap">'+
+          '<div style="display:flex;gap:10px;align-items:center">'+covTxt+'</div>'+
+          '<div class="small muted"><b style="color:var(--tb-dk)">'+total+'</b> selected \u00b7 covering <b style="color:var(--tb-dk)">'+cov+'/3</b> leverage points</div>'+
+        '</div>'+
+        '<div style="font-size:12.5px;color:var(--ink-soft);line-height:1.45;margin-top:8px">'+notes.join(' ')+'</div>'+
+      '</div>';
+    }
+    host.addEventListener('click',function(e){
+      var b=e.target.closest('.mgCard'); if(!b)return;
+      var k=b.getAttribute('data-k'), i=+b.getAttribute('data-i');
+      var set=chosen[k]; var c=cols.filter(function(x){return x.key===k;})[0];
+      if(set.has(i)){ set.delete(i); b.style.background='#fff'; b.style.borderColor='var(--line)'; b.style.boxShadow='none'; }
+      else { set.add(i); b.style.background=c.bg; b.style.borderColor=c.col; b.style.boxShadow='0 2px 8px rgba(21,53,61,.10)'; }
+      summary();
+    });
+    summary();
+  };
+
+})();
+</script>
+
+</body>
+</html>
